@@ -221,7 +221,7 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake v3.6 · Sagifox Dental</span>
+  <span class="muted">LabIntake v3.7 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -459,6 +459,7 @@
       ul.appendChild(li);
     });
   }
+
   $('addMatBtn').onclick=()=>{
     const n=$('matName').value.trim(); if(!n){$('matName').focus();return;}
     mats.push({name:n,qty:$('matQty').value.trim(),unit:$('matUnit').value.trim()});
@@ -594,9 +595,7 @@
     try{
       if(window.supabase&&window.supabase.createClient){
         sb=window.supabase.createClient(SB_URL,SB_KEY);
-        console.log('Supabase client ready');
-      } else {
-        console.warn('Supabase library not loaded yet');
+        console.log('Supabase ready');
       }
     }catch(e){console.warn('Supabase init error:',e);}
     resetForm();
