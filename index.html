@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -64,8 +64,8 @@
 <header class="topbar">
   <h1>LabIntake</h1>
   <div style="display:flex;align-items:center;gap:8px">
-    <span id="syncStatus" class="sync-ok" style="display:none">✓ Sync</span>
-    <span id="countBadge" class="badge">0 casos</span>
+    <span id="syncStatus" class="sync-ok" style="display:none">✓ Synced</span>
+    <span id="countBadge" class="badge">0 cases</span>
   </div>
 </header>
 
@@ -73,49 +73,49 @@
 
   <!-- ===== FORM ===== -->
   <section class="card" id="formCard">
-    <div class="edit-banner" id="editBanner">✏️ <span>Editando entrada — modifica y guarda para actualizar</span></div>
-    <h2 id="formTitle">Nueva entrada</h2>
+    <div class="edit-banner" id="editBanner">✏️ <span>Editing entry — make changes and save to update</span></div>
+    <h2 id="formTitle">New Entry</h2>
     <form id="entryForm" autocomplete="off">
       <input type="hidden" id="editingId">
 
       <div class="row">
-        <label>Fecha de entrada
+        <label>Entry date
           <input type="date" id="fechaEntrada" name="fechaEntrada" required>
         </label>
       </div>
 
       <div class="row">
-        <label>Doctor / Clínica
+        <label>Doctor / Clinic
           <select id="doctorSelect" name="doctor" required>
-            <option value="">— seleccionar —</option>
+            <option value="">— select —</option>
           </select>
         </label>
       </div>
 
       <div class="row-actions">
-        <button type="button" id="toggleNewDoc" class="link">+ Agregar nuevo doctor</button>
+        <button type="button" id="toggleNewDoc" class="link">+ Add new doctor / clinic</button>
       </div>
       <div class="row" id="newDocRow" hidden>
-        <label>Nombre
-          <input type="text" id="newDocInput" placeholder="Ej: Dr. Smith" autocomplete="off">
+        <label>Name
+          <input type="text" id="newDocInput" placeholder="e.g. Dr. Smith" autocomplete="off">
         </label>
         <div class="row-buttons">
-          <button type="button" id="saveDocBtn" class="primary-sm">Guardar</button>
-          <button type="button" id="cancelDocBtn" class="link">Cancelar</button>
+          <button type="button" id="saveDocBtn" class="primary-sm">Save</button>
+          <button type="button" id="cancelDocBtn" class="link">Cancel</button>
         </div>
       </div>
 
       <div class="row">
-        <label>Paciente
-          <input type="text" id="pacienteInput" name="paciente" placeholder="Nombre del paciente" required autocomplete="name">
+        <label>Patient name
+          <input type="text" id="pacienteInput" name="paciente" placeholder="Patient name" required autocomplete="name">
         </label>
       </div>
 
       <div class="row">
-        <label>Tipo de restauración
-          <input type="text" id="trabajoInput" name="trabajo" value="corona" list="workTypes" placeholder="Ej: corona, zirconia, puente…" required>
+        <label>Restoration type
+          <input type="text" id="trabajoInput" name="trabajo" value="crown" list="workTypes" placeholder="e.g. crown, zirconia, bridge…" required>
           <datalist id="workTypes">
-            <option value="corona"><option value="Crown preparation"><option value="Vita multilayer zirconia">
+            <option value="crown"><option value="Crown preparation"><option value="Vita multilayer zirconia">
             <option value="Crown on implant"><option value="Screw retained crown (SRC)"><option value="Custom abutment">
             <option value="Provisional / temporary"><option value="Veneer"><option value="Bridge (preparation)">
             <option value="Bridge on implants"><option value="Acrylic flipper"><option value="Overdenture">
@@ -126,17 +126,17 @@
       </div>
 
       <div class="row">
-        <label>Fecha de entrega
+        <label>Delivery date
           <input type="date" id="fechaEntrega" name="fechaEntrega" required>
         </label>
       </div>
 
       <div class="row">
-        <label>Materiales <span class="optional">(opcional)</span>
+        <label>Materials <span class="optional">(optional)</span>
           <div class="material-input">
-            <input type="text" id="matName" placeholder="Material (Ej: Disco Zirconia Vita)">
-            <input type="number" id="matQty" placeholder="Cant" min="0" step="any" inputmode="decimal">
-            <input type="text" id="matUnit" placeholder="Unidad">
+            <input type="text" id="matName" placeholder="Material name (e.g. Zirconia disc Vita)">
+            <input type="number" id="matQty" placeholder="Qty" min="0" step="any" inputmode="decimal">
+            <input type="text" id="matUnit" placeholder="Unit">
             <button type="button" id="addMatBtn" class="primary-sm">+</button>
           </div>
           <ul id="matList" class="mat-list" hidden></ul>
@@ -144,27 +144,27 @@
       </div>
 
       <div class="row">
-        <label>Notas <span class="optional">(opcional)</span>
-          <textarea id="entryNotes" rows="3" placeholder="Shade, info importante, preferencias del paciente…"></textarea>
+        <label>Notes <span class="optional">(optional)</span>
+          <textarea id="entryNotes" rows="3" placeholder="Shade, important info, patient preferences…"></textarea>
         </label>
         <label class="check-row">
           <input type="checkbox" id="entryImportant">
-          <span>Marcar como importante ⚠️</span>
+          <span>Mark as important ⚠️</span>
         </label>
       </div>
 
       <div class="form-action-row">
-        <button type="button" id="cancelEditBtn" class="link" hidden>✕ Cancelar edición</button>
+        <button type="button" id="cancelEditBtn" class="link" hidden>✕ Cancel edit</button>
       </div>
 
-      <button type="submit" class="primary" id="saveBtn">💾 Guardar entrada</button>
+      <button type="submit" class="primary" id="saveBtn">💾 Save entry</button>
     </form>
   </section>
 
   <!-- ===== MONITOR ===== -->
   <section class="card" id="monitorCard">
     <div class="sec-hdr">
-      <h2>📋 Monitor de Casos</h2>
+      <h2>📋 Case Monitor</h2>
       <span id="monitorCount" style="color:#64748b;font-size:12px;font-weight:600"></span>
     </div>
 
@@ -173,13 +173,13 @@
     </div>
 
     <div class="search-row">
-      <input type="search" id="searchInput" placeholder="🔍 Buscar paciente, doctor, trabajo…">
+      <input type="search" id="searchInput" placeholder="🔍 Search patient, doctor, work…">
       <select id="filterSelect">
-        <option value="all">Todos</option>
-        <option value="open">🔵 Abiertos</option>
-        <option value="overdue">🔴 Atrasados</option>
-        <option value="today">🟡 Para hoy</option>
-        <option value="sent">✅ Entregados</option>
+        <option value="all">All</option>
+        <option value="open">🔵 Open</option>
+        <option value="overdue">🔴 Overdue</option>
+        <option value="today">🟡 Due today</option>
+        <option value="sent">✅ Delivered</option>
       </select>
     </div>
 
@@ -188,18 +188,18 @@
         <thead>
           <tr>
             <th data-sort="doctor">👨‍⚕️ Doctor ↕</th>
-            <th data-sort="paciente">🧑 Paciente ↕</th>
-            <th data-sort="trabajo">🦷 Trabajo ↕</th>
-            <th data-sort="entrega">⏰ Quedan ↕</th>
-            <th data-sort="edad">📅 Edad ↕</th>
-            <th>Estado</th>
-            <th style="text-align:right">Acciones</th>
+            <th data-sort="paciente">🧑 Patient ↕</th>
+            <th data-sort="trabajo">🦷 Work ↕</th>
+            <th data-sort="entrega">⏰ Due in ↕</th>
+            <th data-sort="edad">📅 Age ↕</th>
+            <th>Status</th>
+            <th style="text-align:right">Actions</th>
           </tr>
         </thead>
         <tbody id="caseBody"></tbody>
       </table>
     </div>
-    <p id="monitorEmpty" class="monitor-empty" hidden>No hay casos todavía. Agrega la primera orden arriba ↑</p>
+    <p id="monitorEmpty" class="monitor-empty" hidden>No cases yet. Add the first order above ↑</p>
   </section>
 
 </main>
@@ -210,11 +210,11 @@
   <button class="fab-btn" id="fabExcel" style="background:#16a34a">📊 <span>Excel</span></button>
   <button class="fab-btn" id="fabCsv"   style="background:#0ea5e9">📋 <span>CSV</span></button>
   <button class="fab-btn" id="fabPdf"   style="background:#7c3aed">📄 <span>PDFs</span></button>
-  <button class="fab-btn" id="fabClear" style="background:#dc2626">🗑️ <span>Limpiar</span></button>
+  <button class="fab-btn" id="fabClear" style="background:#dc2626">🗑️ <span>Clear</span></button>
 </div>
 
 <footer>
-  <span class="muted">LabIntake · v3.1 · Sagifox Dental</span>
+  <span class="muted">LabIntake · v3.2 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -234,7 +234,7 @@
   const esc = s  => { const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; };
   const ymd = d  => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const uuid= () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);});
-  const fmtD= s  => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]} ${d.getFullYear()}`; };
+  const fmtD= s  => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; };
   const daysUntil = s => { if(!s) return null; const d=new Date(s); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
   const daysOpen  = e => { const s=e.createdAt||e.fechaEntrada; if(!s) return 0; const d=new Date(s); if(isNaN(d)) return 0; const t=new Date(); d.setHours(0,0,0,0); t.setHours(0,0,0,0); return Math.max(0,Math.round((t-d)/86400000)); };
 
@@ -256,26 +256,26 @@
   function renderDocs(sel){
     const el=$('doctorSelect'); if(!el) return;
     const docs=readDocs();
-    el.innerHTML='<option value="">— seleccionar —</option>'+docs.map(d=>`<option value="${esc(d)}"${d===sel?' selected':''}>${esc(d)}</option>`).join('');
+    el.innerHTML='<option value="">— select —</option>'+docs.map(d=>`<option value="${esc(d)}"${d===sel?' selected':''}>${esc(d)}</option>`).join('');
     if(sel) el.value=sel;
   }
 
   // ── Status ────────────────────────────────────────────
   function statusOf(e){
-    if(e.entregado) return {key:'sent',   label:'✅ Entregado',      color:'#16a34a',bg:'#dcfce7'};
+    if(e.entregado) return {key:'sent',   label:'✅ Delivered',      color:'#16a34a',bg:'#dcfce7'};
     const d=daysUntil(e.fechaEntrega);
     if(d===null)  return {key:'?',      label:'—',                 color:'#64748b',bg:'#f1f5f9'};
-    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d`,color:'#dc2626',bg:'#fee2e2'};
-    if(d===0)     return {key:'today',  label:'🟡 HOY',            color:'#ca8a04',bg:'#fef9c3'};
-    if(d===1)     return {key:'warn',   label:'🟠 Mañana',         color:'#ea580c',bg:'#ffedd5'};
-    if(d<=7)      return {key:'week',   label:`🟢 En ${d}d`,       color:'#16a34a',bg:'#dcfce7'};
-    return              {key:'future', label:`⚪ En ${d}d`,        color:'#64748b',bg:'#f1f5f9'};
+    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d overdue`, color:'#dc2626',bg:'#fee2e2'};
+    if(d===0)     return {key:'today',  label:'🟡 TODAY',          color:'#ca8a04',bg:'#fef9c3'};
+    if(d===1)     return {key:'warn',   label:'🟠 Tomorrow',       color:'#ea580c',bg:'#ffedd5'};
+    if(d<=7)      return {key:'week',   label:`🟢 In ${d}d`,       color:'#16a34a',bg:'#dcfce7'};
+    return              {key:'future', label:`⚪ In ${d}d`,        color:'#64748b',bg:'#f1f5f9'};
   }
 
   // ── Table ─────────────────────────────────────────────
   function renderTable(){
     const all=readEntries();
-    $('countBadge').textContent=`${all.length} caso${all.length===1?'':'s'}`;
+    $('countBadge').textContent=`${all.length} case${all.length===1?'':'s'}`;
 
     const open=all.filter(e=>!e.entregado).length;
     const ov  =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d!==null&&d<0;}).length;
@@ -283,10 +283,10 @@
     const snt =all.filter(e=>e.entregado).length;
     $('statsBar').innerHTML=
       `<span class="stat-pill total" onclick="setFilter('all')">📋 ${all.length} total</span>`+
-      `<span class="stat-pill open" onclick="setFilter('open')">🔵 ${open} abiertos</span>`+
-      `<span class="stat-pill overdue" onclick="setFilter('overdue')">🔴 ${ov} atrasados</span>`+
-      `<span class="stat-pill today" onclick="setFilter('today')">🟡 ${tod} hoy</span>`+
-      `<span class="stat-pill sent" onclick="setFilter('sent')">✅ ${snt} entregados</span>`;
+      `<span class="stat-pill open" onclick="setFilter('open')">🔵 ${open} open</span>`+
+      `<span class="stat-pill overdue" onclick="setFilter('overdue')">🔴 ${ov} overdue</span>`+
+      `<span class="stat-pill today" onclick="setFilter('today')">🟡 ${tod} today</span>`+
+      `<span class="stat-pill sent" onclick="setFilter('sent')">✅ ${snt} delivered</span>`;
 
     const filter=$('filterSelect').value;
     const search=($('searchInput').value||'').toLowerCase();
@@ -319,7 +319,7 @@
       const urgCls=e.entregado?'':du!==null&&du<0?'row-urgent':du!==null&&du<=1?'row-warning':'';
       const impTag=e.important?'<span style="background:#fef3c7;color:#92400e;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:700;margin-right:3px">⚠️</span>':'';
       const newCls=e.id===lastSaved?'new-row':'';
-      const cdText=e.entregado?'✓ Listo':du===null?'—':du<0?`${Math.abs(du)}d TARD`:du===0?'¡HOY!':`${du}d`;
+      const cdText=e.entregado?'✓ Done':du===null?'—':du<0?`${Math.abs(du)}d late`:du===0?'TODAY!':`${du}d`;
       const sid=esc(e.id);
       return `<tr class="${urgCls} ${newCls}" data-id="${sid}">
         <td>${esc(e.doctor||'—')}</td>
@@ -329,10 +329,10 @@
         <td style="color:${ageColor};font-weight:600">${age}d</td>
         <td><span class="st-badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
         <td style="text-align:right;white-space:nowrap" onclick="event.stopPropagation()">
-          <button class="act-btn btn-sent" onclick="LI.toggleSent('${sid}')" title="${e.entregado?'Reabrir':'Marcar entregado'}">${e.entregado?'↩':'✓'}</button>
-          <button class="act-btn btn-edit" onclick="LI.startEdit('${sid}')" title="Editar">✏️</button>
+          <button class="act-btn btn-sent" onclick="LI.toggleSent('${sid}')" title="${e.entregado?'Reopen':'Mark delivered'}">${e.entregado?'↩':'✓'}</button>
+          <button class="act-btn btn-edit" onclick="LI.startEdit('${sid}')" title="Edit">✏️</button>
           <button class="act-btn btn-pdf"  onclick="LI.genPDF('${sid}')"    title="PDF">📄</button>
-          <button class="act-btn btn-del"  onclick="LI.delEntry('${sid}')"  title="Borrar">🗑</button>
+          <button class="act-btn btn-del"  onclick="LI.delEntry('${sid}')"  title="Delete">🗑</button>
         </td>
       </tr>`;
     }).join('');
@@ -343,21 +343,20 @@
     }
   }
 
-  // ── Filter shortcut ──────────────────────────────────
   window.setFilter = val => { $('filterSelect').value=val; renderTable(); };
 
   // ── Reset form ───────────────────────────────────────
   function resetForm(){
     editingId=null;
     $('editingId').value='';
-    $('formTitle').textContent='Nueva entrada';
+    $('formTitle').textContent='New Entry';
     $('editBanner').classList.remove('active');
     $('cancelEditBtn').hidden=true;
-    $('saveBtn').textContent='💾 Guardar entrada';
+    $('saveBtn').textContent='💾 Save entry';
     const t=new Date();
     $('fechaEntrada').value=ymd(t);
     $('fechaEntrega').value=ymd(new Date(t.getTime()+5*86400000));
-    $('trabajoInput').value='corona';
+    $('trabajoInput').value='crown';
     $('pacienteInput').value='';
     renderDocs('Dr. Acosta');
     $('entryNotes').value='';
@@ -365,16 +364,16 @@
     mats=[]; renderMatList();
   }
 
-  // ── Row actions (global so onclick in HTML works) ────
+  // ── Row actions ──────────────────────────────────────
   window.LI = {
     startEdit(id){
       const e=readEntries().find(x=>x.id===id); if(!e) return;
       editingId=id;
       $('editingId').value=id;
-      $('formTitle').textContent='✏️ Editando entrada';
+      $('formTitle').textContent='✏️ Edit Entry';
       $('editBanner').classList.add('active');
       $('cancelEditBtn').hidden=false;
-      $('saveBtn').textContent='💾 Actualizar entrada';
+      $('saveBtn').textContent='💾 Update entry';
       $('fechaEntrada').value=(e.fechaEntrada||'').slice(0,10);
       $('fechaEntrega').value=(e.fechaEntrega||'').slice(0,10);
       renderDocs(e.doctor||'');
@@ -398,18 +397,15 @@
     delEntry(id){
       const arr=readEntries();
       const e=arr.find(x=>x.id===id); if(!e) return;
-      if(!confirm(`¿Borrar entrada de "${e.paciente||'(sin nombre)'}"?\n\nEsta acción no se puede deshacer.`)) return;
-      const updated=arr.filter(x=>x.id!==id);
-      writeEntries(updated);
-      if(sb) sb.from('entries').delete().eq('id',id).then(({error})=>{
-        if(error) console.warn('delete remote:',error);
-      });
+      if(!confirm(`Delete entry for "${e.paciente||'(no name)'}"?\n\nThis cannot be undone.`)) return;
+      writeEntries(arr.filter(x=>x.id!==id));
+      if(sb) sb.from('entries').delete().eq('id',id).catch(()=>{});
       if(editingId===id) resetForm();
       renderTable();
     },
     genPDF(id){
       const e=readEntries().find(x=>x.id===id); if(!e) return;
-      if(!window.jspdf||!window.jspdf.jsPDF){alert('Librería PDF aún cargando, espera un momento.');return;}
+      if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library still loading, please wait a moment.');return;}
       const doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'});
       renderPDF(doc,e);
       doc.save(`LabIntake_${(e.paciente||'entry').replace(/[^a-z0-9]/gi,'_').slice(0,30)}_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -424,11 +420,11 @@
     const trab=($('trabajoInput').value||'').trim();
     const fE=$('fechaEntrada').value;
     const fD=$('fechaEntrega').value;
-    if(!doc||!pac||!trab||!fE||!fD){alert('Faltan campos requeridos');return;}
+    if(!doc||!pac||!trab||!fE||!fD){alert('Please fill in all required fields.');return;}
     const arr=readEntries();
     if(editingId){
       const idx=arr.findIndex(x=>x.id===editingId);
-      if(idx<0){alert('Entrada no encontrada');return;}
+      if(idx<0){alert('Entry not found.');return;}
       arr[idx]={...arr[idx],doctor:doc,paciente:pac,trabajo:trab,fechaEntrada:fE,fechaEntrega:fD,
         notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]};
       writeEntries(arr);
@@ -446,8 +442,8 @@
         entregado:false,entregado_at:null}).catch(()=>{});
     }
     const btn=$('saveBtn');
-    btn.textContent='✓ Guardado!'; btn.disabled=true;
-    setTimeout(()=>{btn.textContent='💾 Guardar entrada';btn.disabled=false;},1400);
+    btn.textContent='✓ Saved!'; btn.disabled=true;
+    setTimeout(()=>{btn.textContent='💾 Save entry';btn.disabled=false;},1400);
     resetForm();
     renderTable();
     setTimeout(()=>$('monitorCard').scrollIntoView({behavior:'smooth',block:'start'}),120);
@@ -478,7 +474,7 @@
   $('saveDocBtn').onclick=()=>{
     const name=($('newDocInput').value||'').trim(); if(!name) return;
     const docs=readDocs();
-    if(docs.some(d=>d.toLowerCase()===name.toLowerCase())){alert(`${name} ya está en la lista.`);return;}
+    if(docs.some(d=>d.toLowerCase()===name.toLowerCase())){alert(`${name} is already in the list.`);return;}
     docs.push(name); writeDocs(docs); renderDocs(name);
     $('newDocRow').hidden=true; $('newDocInput').value='';
     if(sb) sb.from('doctors').insert({name}).catch(()=>{});
@@ -497,28 +493,28 @@
     doc.setFillColor(15,23,42);doc.rect(0,0,216,30,'F');
     doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('LAB INTAKE',15,18);
     doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Sagifox - Dental Lab Entry Record',15,24);
-    doc.setTextColor(180,180,180);doc.setFontSize(9);doc.text('Generado: '+new Date().toLocaleString(),130,24);
+    doc.setTextColor(180,180,180);doc.setFontSize(9);doc.text('Generated: '+new Date().toLocaleString(),130,24);
     let y=44;
-    if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('⚠ IMPORTANTE',18,y+7.5);y+=16;}
-    if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('✓ ENTREGADO',18,y+7.5);y+=16;}
+    if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('⚠ IMPORTANT',18,y+7.5);y+=16;}
+    if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('✓ DELIVERED',18,y+7.5);y+=16;}
     y+=4;
-    [['Doctor / Clínica',e.doctor],['Paciente',e.paciente],['Restauración',e.trabajo],['Fecha entrada',fmtD(e.fechaEntrada)],['Fecha entrega',fmtD(e.fechaEntrega)]].forEach(([l,v])=>{
+    [['Doctor / Clinic',e.doctor],['Patient',e.paciente],['Restoration',e.trabajo],['Entry date',fmtD(e.fechaEntrada)],['Delivery date',fmtD(e.fechaEntrega)]].forEach(([l,v])=>{
       doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text(l+':',15,y);
       doc.setFontSize(12);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.text(String(v||'—'),65,y);y+=9;
     });
-    if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('NOTAS:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
-    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('MATERIALES:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
+    if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('NOTES:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
+    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('MATERIALS:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
     doc.setDrawColor(200,200,200);doc.line(15,270,200,270);
     doc.setFontSize(8);doc.setTextColor(150,150,150);
     doc.text('ID: '+(e.id||'—'),15,275);
-    if(e.createdAt) doc.text('Creado: '+fmtD(e.createdAt),15,280);
+    if(e.createdAt) doc.text('Created: '+fmtD(e.createdAt),15,280);
   }
 
-  // ── Sync helper ───────────────────────────────────────
-  async function doSync(showStatus){
+  // ── Sync ─────────────────────────────────────────────
+  async function doSync(){
     if(!sb) return 0;
     const stel=$('syncStatus');
-    if(stel){stel.className='sync-loading';stel.style.display='inline-block';stel.textContent='↻ Sync…';}
+    if(stel){stel.className='sync-loading';stel.style.display='inline-block';stel.textContent='↻ Syncing…';}
     try{
       const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
       if(error) throw error;
@@ -531,7 +527,6 @@
       const merged=[...remote];
       local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
       writeEntries(merged);
-      // push missing locals to cloud
       const missing=local.filter(e=>!remoteIds.has(e.id));
       for(const e of missing){
         sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,
@@ -539,35 +534,35 @@
           materials:e.materials||[],notes:e.notes||'',important:!!e.important,
           entregado:!!e.entregado,entregado_at:e.entregadoAt||null}).catch(()=>{});
       }
-      if(stel){stel.className='sync-ok';stel.textContent=`✓ ${merged.length} casos`;}
+      if(stel){stel.className='sync-ok';stel.textContent=`✓ ${merged.length} cases`;}
       renderTable();
       return merged.length;
     }catch(err){
       console.error('sync:',err);
-      if(stel){stel.className='sync-err';stel.textContent='✗ Error';}
+      if(stel){stel.className='sync-err';stel.textContent='✗ Sync error';}
       return -1;
     }
   }
 
   // ── FAB ───────────────────────────────────────────────
   $('fabExcel').onclick=()=>{
-    if(!window.XLSX){alert('Librería Excel cargando…');return;}
-    const arr=readEntries(); if(!arr.length){alert('No hay datos para exportar.');return;}
-    const rows=arr.map(e=>({'Fecha Entrada':e.fechaEntrada||'','Fecha Entrega':e.fechaEntrega||'',
-      'Doctor':e.doctor||'','Paciente':e.paciente||'','Restauración':e.trabajo||'','Notas':e.notes||'',
-      'Importante':e.important?'SI':'','Entregado':e.entregado?'SI':'',
-      'Entregado El':e.entregadoAt?fmtD(e.entregadoAt):'',
-      'Materiales':(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
-      'Creado':e.createdAt?fmtD(e.createdAt):''}));
+    if(!window.XLSX){alert('Excel library still loading…');return;}
+    const arr=readEntries(); if(!arr.length){alert('No data to export.');return;}
+    const rows=arr.map(e=>({'Entry Date':e.fechaEntrada||'','Delivery Date':e.fechaEntrega||'',
+      'Doctor':e.doctor||'','Patient':e.paciente||'','Restoration':e.trabajo||'','Notes':e.notes||'',
+      'Important':e.important?'YES':'','Delivered':e.entregado?'YES':'',
+      'Delivered On':e.entregadoAt?fmtD(e.entregadoAt):'',
+      'Materials':(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
+      'Created':e.createdAt?fmtD(e.createdAt):''}));
     const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'LabIntake');
     XLSX.writeFile(wb,`LabIntake_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   $('fabCsv').onclick=()=>{
-    const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
-    const hdr=['Fecha Entrada','Fecha Entrega','Doctor','Paciente','Restauración','Notas','Importante','Entregado','Entregado El','Materiales','Creado'];
+    const arr=readEntries(); if(!arr.length){alert('No data.');return;}
+    const hdr=['Entry Date','Delivery Date','Doctor','Patient','Restoration','Notes','Important','Delivered','Delivered On','Materials','Created'];
     const rows=arr.map(e=>[e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
-      (e.notes||'').replace(/"/g,'""'),e.important?'SI':'',e.entregado?'SI':'',
+      (e.notes||'').replace(/"/g,'""'),e.important?'YES':'',e.entregado?'YES':'',
       e.entregadoAt?fmtD(e.entregadoAt):'',
       (e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
       e.createdAt?fmtD(e.createdAt):'']);
@@ -577,23 +572,23 @@
     a.download=`LabIntake_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
   $('fabPdf').onclick=()=>{
-    const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
-    if(!window.jspdf||!window.jspdf.jsPDF){alert('Librería PDF aún cargando…');return;}
+    const arr=readEntries(); if(!arr.length){alert('No data.');return;}
+    if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library still loading…');return;}
     let doc=null;
     arr.forEach((e,i)=>{if(i===0) doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'}); else doc.addPage(); renderPDF(doc,e);});
-    doc.save(`LabIntake_Todos_${new Date().toISOString().slice(0,10)}.pdf`);
+    doc.save(`LabIntake_All_${new Date().toISOString().slice(0,10)}.pdf`);
   };
   $('fabSync').onclick=async()=>{
     const btn=$('fabSync');
-    btn.innerHTML='⏳ <span>Bajando…</span>'; btn.disabled=true;
-    const n=await doSync(true);
-    btn.innerHTML=n<0?'❌ <span>Error</span>':`✅ <span>${n} casos</span>`;
+    btn.innerHTML='⏳ <span>Syncing…</span>'; btn.disabled=true;
+    const n=await doSync();
+    btn.innerHTML=n<0?'❌ <span>Error</span>':`✅ <span>${n} cases</span>`;
     btn.disabled=false;
     setTimeout(()=>{btn.innerHTML='☁️ <span>Sync</span>';},3000);
   };
   $('fabClear').onclick=()=>{
-    if(!confirm('¿Borrar TODAS las entradas locales?\n(La nube no se afecta — haz Sync para recuperarlas.)')) return;
-    writeEntries([]); renderTable(); alert('✓ Limpiado');
+    if(!confirm('Delete ALL local entries?\n(Cloud is not affected — press Sync to restore them.)')) return;
+    writeEntries([]); renderTable(); alert('✓ Cleared');
   };
 
   // ── Boot ──────────────────────────────────────────────
