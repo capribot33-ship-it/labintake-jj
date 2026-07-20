@@ -214,7 +214,7 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake · v3.2 · Sagifox Dental</span>
+  <span class="muted">LabIntake · v3.3 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -222,7 +222,7 @@
   'use strict';
 
   const SB_URL  = 'https://nxuodoyztekbrggrpngt.supabase.co';
-  const SB_KEY  = 'sb_publishable_VHa6BQ-6C24P2aiM11uX5Q_8D14SqF0';
+  const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dW9kb3l6dGVrYnJnZ3Jwbmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0ODQ1NzcsImV4cCI6MjEwMDA2MDU3N30.Fxth1lJsi4a76tnwZGvim7pe29Hekt6s3XxkM4iHjBM';
   const STORE   = 'labintake.entries.v1';
   const BACKUP  = '__labintake_backup_v1';
   const DOC_KEY = 'labintake.doctors.v1';
@@ -238,7 +238,6 @@
   const daysUntil = s => { if(!s) return null; const d=new Date(s); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
   const daysOpen  = e => { const s=e.createdAt||e.fechaEntrada; if(!s) return 0; const d=new Date(s); if(isNaN(d)) return 0; const t=new Date(); d.setHours(0,0,0,0); t.setHours(0,0,0,0); return Math.max(0,Math.round((t-d)/86400000)); };
 
-  // ── Storage ──────────────────────────────────────────
   function readEntries(){
     const r=k=>{try{const a=JSON.parse(localStorage.getItem(k));return Array.isArray(a)?a:[];}catch(e){return[];}};
     const p=r(STORE),b=r(BACKUP);
@@ -252,7 +251,6 @@
   function readDocs(){try{const a=JSON.parse(localStorage.getItem(DOC_KEY));return Array.isArray(a)&&a.length?a:DEF_DOCS.slice();}catch(e){return DEF_DOCS.slice();}}
   function writeDocs(a){try{localStorage.setItem(DOC_KEY,JSON.stringify(a));}catch(e){}}
 
-  // ── Doctor dropdown ───────────────────────────────────
   function renderDocs(sel){
     const el=$('doctorSelect'); if(!el) return;
     const docs=readDocs();
@@ -260,23 +258,20 @@
     if(sel) el.value=sel;
   }
 
-  // ── Status ────────────────────────────────────────────
   function statusOf(e){
-    if(e.entregado) return {key:'sent',   label:'✅ Delivered',      color:'#16a34a',bg:'#dcfce7'};
+    if(e.entregado) return {key:'sent',   label:'✅ Delivered',             color:'#16a34a',bg:'#dcfce7'};
     const d=daysUntil(e.fechaEntrega);
-    if(d===null)  return {key:'?',      label:'—',                 color:'#64748b',bg:'#f1f5f9'};
-    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d overdue`, color:'#dc2626',bg:'#fee2e2'};
-    if(d===0)     return {key:'today',  label:'🟡 TODAY',          color:'#ca8a04',bg:'#fef9c3'};
-    if(d===1)     return {key:'warn',   label:'🟠 Tomorrow',       color:'#ea580c',bg:'#ffedd5'};
-    if(d<=7)      return {key:'week',   label:`🟢 In ${d}d`,       color:'#16a34a',bg:'#dcfce7'};
-    return              {key:'future', label:`⚪ In ${d}d`,        color:'#64748b',bg:'#f1f5f9'};
+    if(d===null)  return {key:'?',      label:'—',                        color:'#64748b',bg:'#f1f5f9'};
+    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d overdue`,color:'#dc2626',bg:'#fee2e2'};
+    if(d===0)     return {key:'today',  label:'🟡 TODAY',                  color:'#ca8a04',bg:'#fef9c3'};
+    if(d===1)     return {key:'warn',   label:'🟠 Tomorrow',               color:'#ea580c',bg:'#ffedd5'};
+    if(d<=7)      return {key:'week',   label:`🟢 In ${d}d`,               color:'#16a34a',bg:'#dcfce7'};
+    return              {key:'future', label:`⚪ In ${d}d`,                color:'#64748b',bg:'#f1f5f9'};
   }
 
-  // ── Table ─────────────────────────────────────────────
   function renderTable(){
     const all=readEntries();
     $('countBadge').textContent=`${all.length} case${all.length===1?'':'s'}`;
-
     const open=all.filter(e=>!e.entregado).length;
     const ov  =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d!==null&&d<0;}).length;
     const tod =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d===0;}).length;
@@ -287,7 +282,6 @@
       `<span class="stat-pill overdue" onclick="setFilter('overdue')">🔴 ${ov} overdue</span>`+
       `<span class="stat-pill today" onclick="setFilter('today')">🟡 ${tod} today</span>`+
       `<span class="stat-pill sent" onclick="setFilter('sent')">✅ ${snt} delivered</span>`;
-
     const filter=$('filterSelect').value;
     const search=($('searchInput').value||'').toLowerCase();
     let list=all.filter(e=>{
@@ -345,7 +339,6 @@
 
   window.setFilter = val => { $('filterSelect').value=val; renderTable(); };
 
-  // ── Reset form ───────────────────────────────────────
   function resetForm(){
     editingId=null;
     $('editingId').value='';
@@ -364,7 +357,6 @@
     mats=[]; renderMatList();
   }
 
-  // ── Row actions ──────────────────────────────────────
   window.LI = {
     startEdit(id){
       const e=readEntries().find(x=>x.id===id); if(!e) return;
@@ -412,7 +404,6 @@
     }
   };
 
-  // ── Form submit ───────────────────────────────────────
   $('entryForm').addEventListener('submit',function(ev){
     ev.preventDefault();
     const doc=$('doctorSelect').value;
@@ -449,7 +440,6 @@
     setTimeout(()=>$('monitorCard').scrollIntoView({behavior:'smooth',block:'start'}),120);
   });
 
-  // ── Materials ─────────────────────────────────────────
   function renderMatList(){
     const ul=$('matList'); ul.innerHTML='';
     if(!mats.length){ul.hidden=true;return;}
@@ -468,7 +458,6 @@
     renderMatList(); $('matName').value=''; $('matQty').value=''; $('matUnit').value=''; $('matName').focus();
   };
 
-  // ── Doctor controls ───────────────────────────────────
   $('toggleNewDoc').onclick=()=>{$('newDocRow').hidden=false;$('newDocInput').focus();};
   $('cancelDocBtn').onclick=()=>{$('newDocRow').hidden=true;$('newDocInput').value='';};
   $('saveDocBtn').onclick=()=>{
@@ -481,14 +470,12 @@
   };
   $('cancelEditBtn').onclick=resetForm;
 
-  // ── Sort & filter ─────────────────────────────────────
   document.querySelectorAll('.case-table th[data-sort]').forEach(th=>{
     th.onclick=()=>{const col=th.dataset.sort;if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();};
   });
   $('filterSelect').onchange=renderTable;
   $('searchInput').oninput=renderTable;
 
-  // ── PDF ───────────────────────────────────────────────
   function renderPDF(doc,e){
     doc.setFillColor(15,23,42);doc.rect(0,0,216,30,'F');
     doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('LAB INTAKE',15,18);
@@ -510,7 +497,6 @@
     if(e.createdAt) doc.text('Created: '+fmtD(e.createdAt),15,280);
   }
 
-  // ── Sync ─────────────────────────────────────────────
   async function doSync(){
     if(!sb) return 0;
     const stel=$('syncStatus');
@@ -544,7 +530,6 @@
     }
   }
 
-  // ── FAB ───────────────────────────────────────────────
   $('fabExcel').onclick=()=>{
     if(!window.XLSX){alert('Excel library still loading…');return;}
     const arr=readEntries(); if(!arr.length){alert('No data to export.');return;}
@@ -591,7 +576,6 @@
     writeEntries([]); renderTable(); alert('✓ Cleared');
   };
 
-  // ── Boot ──────────────────────────────────────────────
   async function boot(){
     try{
       if(window.supabase&&window.supabase.createClient)
