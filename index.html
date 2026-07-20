@@ -214,7 +214,7 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake · v3.3 · Sagifox Dental</span>
+  <span class="muted">LabIntake · v3.4 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -482,15 +482,15 @@
     doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Sagifox - Dental Lab Entry Record',15,24);
     doc.setTextColor(180,180,180);doc.setFontSize(9);doc.text('Generated: '+new Date().toLocaleString(),130,24);
     let y=44;
-    if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('⚠ IMPORTANT',18,y+7.5);y+=16;}
-    if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('✓ DELIVERED',18,y+7.5);y+=16;}
+    if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('!! IMPORTANT',18,y+7.5);y+=16;}
+    if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('DELIVERED',18,y+7.5);y+=16;}
     y+=4;
     [['Doctor / Clinic',e.doctor],['Patient',e.paciente],['Restoration',e.trabajo],['Entry date',fmtD(e.fechaEntrada)],['Delivery date',fmtD(e.fechaEntrega)]].forEach(([l,v])=>{
       doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text(l+':',15,y);
       doc.setFontSize(12);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.text(String(v||'—'),65,y);y+=9;
     });
     if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('NOTES:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
-    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('MATERIALS:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
+    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('MATERIALS:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`- ${m.name||''}${m.qty?' x '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
     doc.setDrawColor(200,200,200);doc.line(15,270,200,270);
     doc.setFontSize(8);doc.setTextColor(150,150,150);
     doc.text('ID: '+(e.id||'—'),15,275);
@@ -498,13 +498,17 @@
   }
 
   async function doSync(){
-    if(!sb) return 0;
+    if(!sb){
+      const stel=$('syncStatus');
+      if(stel){stel.className='sync-err';stel.style.display='inline-block';stel.textContent='✗ No connection';}
+      return -1;
+    }
     const stel=$('syncStatus');
     if(stel){stel.className='sync-loading';stel.style.display='inline-block';stel.textContent='↻ Syncing…';}
     try{
       const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
       if(error) throw error;
-      const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,
+      const remote=(data||[]).map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,
         paciente:row.paciente,trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,
         materials:row.materials||[],notes:row.notes||'',important:!!row.important,
         entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
@@ -515,7 +519,7 @@
       writeEntries(merged);
       const missing=local.filter(e=>!remoteIds.has(e.id));
       for(const e of missing){
-        sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,
+        await sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,
           paciente:e.paciente,trabajo:e.trabajo,fecha_entrega:e.fechaEntrega,
           materials:e.materials||[],notes:e.notes||'',important:!!e.important,
           entregado:!!e.entregado,entregado_at:e.entregadoAt||null}).catch(()=>{});
@@ -524,7 +528,7 @@
       renderTable();
       return merged.length;
     }catch(err){
-      console.error('sync:',err);
+      console.error('sync error:',err);
       if(stel){stel.className='sync-err';stel.textContent='✗ Sync error';}
       return -1;
     }
@@ -572,15 +576,17 @@
     setTimeout(()=>{btn.innerHTML='☁️ <span>Sync</span>';},3000);
   };
   $('fabClear').onclick=()=>{
-    if(!confirm('Delete ALL local entries?\n(Cloud is not affected — press Sync to restore them.)')) return;
-    writeEntries([]); renderTable(); alert('✓ Cleared');
+    if(!confirm('Delete ALL local entries?\n(Cloud data is NOT affected — press Sync to restore them.)')) return;
+    writeEntries([]); renderTable(); alert('Cleared');
   };
 
   async function boot(){
     try{
-      if(window.supabase&&window.supabase.createClient)
+      if(window.supabase&&window.supabase.createClient){
         sb=window.supabase.createClient(SB_URL,SB_KEY);
-    }catch(e){console.warn('SB init:',e);}
+        console.log('Supabase client initialized');
+      }
+    }catch(e){console.warn('Supabase init error:',e);}
     resetForm();
     renderTable();
     if(sb) await doSync();
