@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LabIntake">
+  <title>LabIntake — Lab Intake Log</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles5.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ===== Monitor Table ===== */
+    .stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .stat-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+    .stat-pill.total  {background:#dbeafe;color:#1e40af}
+    .stat-pill.open   {background:#fef9c3;color:#854d0e}
+    .stat-pill.overdue{background:#fee2e2;color:#991b1b}
+    .stat-pill.today  {background:#fef3c7;color:#92400e}
+    .stat-pill.sent   {background:#dcfce7;color:#166534}
+    .case-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+    .case-table th{padding:10px 12px;background:#f8fafc;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;user-select:none}
+    .case-table th:hover{background:#f1f5f9}
+    .case-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    .case-table tr:last-child td{border-bottom:none}
+    .case-table tr.row-urgent td{background:#fff5f5}
+    .case-table tr.row-warning td{background:#fffbeb}
+    .case-table tbody tr:hover td{background:#f8fafc}
+    @keyframes rowFlash{0%{background:#bbf7d0}100%{background:transparent}}
+    .new-highlight td{animation:rowFlash 2.5s ease-out forwards}
+    .cd-pill{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;min-width:80px;text-align:center}
+    .st-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
+    .act-btn{border:none;padding:5px 9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700;margin-left:3px;transition:opacity .1s}
+    .act-btn:hover{opacity:.85} .act-btn:active{transform:scale(.94)}
+    .btn-sent{background:#16a34a;color:#fff}
+    .btn-edit{background:#2563eb;color:#fff}
+    .btn-pdf {background:#7c3aed;color:#fff}
+    .btn-del {background:#dc2626;color:#fff}
+    .edit-banner{background:#dbeafe;color:#1e40af;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;margin-bottom:12px;display:none;border:1px solid #bfdbfe}
+    .edit-banner.active{display:block}
+    .search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .search-row input{flex:1;min-width:150px;height:38px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px}
+    .search-row select{height:38px;padding:0 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px}
+    .sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .sec-hdr h2{margin:0;font-size:17px}
+    .float-fab{position:fixed;bottom:20px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+    .fab-btn{display:flex;align-items:center;gap:8px;padding:10px 15px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.22);white-space:nowrap}
+    .fab-btn:active{transform:scale(.96)}
+    .table-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px}
+    .monitor-empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>LabIntake</h1>
+  <span id="countBadge" class="badge">0 casos</span>
+</header>
+
+<main>
+
+  <!-- ===== FORM ===== -->
+  <section class="card" id="formCard">
+    <div class="edit-banner" id="editBanner">✏️ Editando entrada — guarda para actualizar</div>
+    <h2 id="formTitle">Nueva entrada</h2>
+    <form id="entryForm" autocomplete="off">
+      <input type="hidden" id="editingId">
+
+      <div class="row">
+        <label>Fecha de entrada
+          <input type="date" id="fechaEntrada" name="fechaEntrada" required>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Doctor / Clínica
+          <select id="doctorSelect" name="doctor" required>
+            <option value="">— seleccionar —</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row-actions">
+        <button type="button" id="toggleNewDoc" class="link">+ Agregar nuevo doctor</button>
+      </div>
+      <div class="row" id="newDocRow" hidden>
+        <label>Nombre
+          <input type="text" id="newDocInput" placeholder="Ej: Dr. Smith" autocomplete="off">
+        </label>
+        <div class="row-buttons">
+          <button type="button" id="saveDocBtn" class="primary-sm">Guardar</button>
+          <button type="button" id="cancelDocBtn" class="link">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Paciente
+          <input type="text" id="pacienteInput" name="paciente" placeholder="Nombre del paciente" required autocomplete="name">
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Tipo de restauración
+          <input type="text" id="trabajoInput" name="trabajo" value="corona" list="workTypes" placeholder="Ej: corona, zirconia, puente…" required>
+          <datalist id="workTypes">
+            <option value="corona"><option value="Crown preparation"><option value="Vita multilayer zirconia">
+            <option value="Crown on implant"><option value="Screw retained crown (SRC)"><option value="Custom abutment">
+            <option value="Provisional / temporary"><option value="Veneer"><option value="Bridge (preparation)">
+            <option value="Bridge on implants"><option value="Acrylic flipper"><option value="Overdenture">
+            <option value="Hybrid restoration (All-on-X)"><option value="Essix retainer"><option value="Waxup">
+            <option value="Inlay / Onlay">
+          </datalist>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Fecha de entrega
+          <input type="date" id="fechaEntrega" name="fechaEntrega" required>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Materiales <span class="optional">(opcional)</span>
+          <div class="material-input">
+            <input type="text" id="matName" placeholder="Material (Ej: Disco Zirconia Vita)">
+            <input type="number" id="matQty" placeholder="Cant" min="0" step="any" inputmode="decimal">
+            <input type="text" id="matUnit" placeholder="Unidad">
+            <button type="button" id="addMatBtn" class="primary-sm">+</button>
+          </div>
+          <ul id="matList" class="mat-list" hidden></ul>
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Notas <span class="optional">(opcional)</span>
+          <textarea id="entryNotes" rows="3" placeholder="Shade, info importante, preferencias del paciente…"></textarea>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="entryImportant">
+          <span>Marcar como importante ⚠️</span>
+        </label>
+      </div>
+
+      <div class="form-action-row">
+        <button type="button" id="cancelEditBtn" class="link" hidden>✕ Cancelar edición</button>
+      </div>
+
+      <button type="submit" class="primary" id="saveBtn">💾 Guardar entrada</button>
+    </form>
+  </section>
+
+  <!-- ===== MONITOR ===== -->
+  <section class="card" id="monitorCard">
+    <div class="sec-hdr">
+      <h2>📋 Monitor de Casos</h2>
+      <span id="monitorCount" style="color:#64748b;font-size:12px;font-weight:600"></span>
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="search-row">
+      <input type="search" id="searchInput" placeholder="🔍 Buscar paciente, doctor, trabajo…">
+      <select id="filterSelect">
+        <option value="all">Todos</option>
+        <option value="open">🔵 Abiertos</option>
+        <option value="overdue">🔴 Atrasados</option>
+        <option value="today">🟡 Para hoy</option>
+        <option value="sent">✅ Entregados</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="case-table" id="caseTable">
+        <thead>
+          <tr>
+            <th data-sort="doctor">👨‍⚕️ Doctor ↕</th>
+            <th data-sort="paciente">🧑 Paciente ↕</th>
+            <th data-sort="trabajo">🦷 Trabajo ↕</th>
+            <th data-sort="entrega">⏰ Quedan ↕</th>
+            <th data-sort="edad">📅 Edad ↕</th>
+            <th>Estado</th>
+            <th style="text-align:right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="caseBody"></tbody>
+      </table>
+    </div>
+    <p id="monitorEmpty" class="monitor-empty" hidden>No hay casos todavía. Agrega la primera orden arriba ↑</p>
+  </section>
+
+</main>
+
+<!-- FAB -->
+<div class="float-fab">
+  <button class="fab-btn" id="fabSync"  style="background:#0891b2">☁️ <span>Sync</span></button>
+  <button class="fab-btn" id="fabExcel" style="background:#16a34a">📊 <span>Excel</span></button>
+  <button class="fab-btn" id="fabCsv"   style="background:#0ea5e9">📋 <span>CSV</span></button>
+  <button class="fab-btn" id="fabPdf"   style="background:#7c3aed">📄 <span>PDFs</span></button>
+  <button class="fab-btn" id="fabClear" style="background:#dc2626">🗑️ <span>Limpiar</span></button>
+</div>
+
+<footer>
+  <span class="muted">LabIntake · v3.0 · Sagifox Dental</span>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  // — Config —
+  const SB_URL   = 'https://nxuodoyztekbrggrpngt.supabase.co';
+  const SB_KEY   = 'sb_publishable_VHa6BQ-6C24P2aiM11uX5Q_8D14SqF0';
+  const STORE    = 'labintake.entries.v1';
+  const BACKUP   = '__labintake_backup_v1';
+  const DOC_KEY  = 'labintake.doctors.v1';
+  const DEF_DOCS = ['Dr. Acosta','Dr. Bravo','Dr. Forero','Dr. Rodriguez','Dr. Secharam'];
+
+  // — State —
+  let sb = null, editingId = null, sortCol = 'entrega', sortAsc = true, mats = [], lastSaved = null;
+
+  // — Utils —
+  const $   = id => document.getElementById(id);
+  const esc = s => { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; };
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const uuid= () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);});
+  const fmtD= s => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]} ${d.getFullYear()}`; };
+  const daysUntil = s => { if(!s) return null; const d=new Date(s); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
+  const daysOpen  = e => { const s=e.createdAt||e.fechaEntrada; if(!s) return 0; const d=new Date(s); if(isNaN(d)) return 0; const t=new Date(); d.setHours(0,0,0,0); t.setHours(0,0,0,0); return Math.max(0,Math.round((t-d)/86400000)); };
+
+  // — Storage —
+  function readEntries() {
+    const r=k=>{try{const a=JSON.parse(localStorage.getItem(k));return Array.isArray(a)?a:[];}catch(e){return[];}};
+    const p=r(STORE),b=r(BACKUP);
+    if(p.length===0&&b.length>0){try{localStorage.setItem(STORE,JSON.stringify(b));}catch(e){}return b;}
+    return b.length>p.length?b:p;
+  }
+  function writeEntries(a){try{localStorage.setItem(STORE,JSON.stringify(a));}catch(e){}try{localStorage.setItem(BACKUP,JSON.stringify(a));}catch(e){}}
+  function readDocs(){try{const a=JSON.parse(localStorage.getItem(DOC_KEY));return Array.isArray(a)&&a.length?a:DEF_DOCS.slice();}catch(e){return DEF_DOCS.slice();}}
+  function writeDocs(a){try{localStorage.setItem(DOC_KEY,JSON.stringify(a));}catch(e){}}
+
+  // — Doctor dropdown —
+  function renderDocs(sel){
+    const el=$('doctorSelect'); if(!el) return;
+    const docs=readDocs();
+    el.innerHTML='<option value="">— seleccionar —</option>'+docs.map(d=>`<option value="${esc(d)}"${d===sel?' selected':''}>${esc(d)}</option>`).join('');
+    if(sel) el.value=sel;
+  }
+
+  // — Status —
+  function statusOf(e){
+    if(e.entregado) return {key:'sent',   label:'✅ Entregado',        color:'#16a34a',bg:'#dcfce7'};
+    const d=daysUntil(e.fechaEntrega);
+    if(d===null)  return {key:'?',      label:'—',                   color:'#64748b',bg:'#f1f5f9'};
+    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d`,  color:'#dc2626',bg:'#fee2e2'};
+    if(d===0)     return {key:'today',  label:'🟡 HOY',              color:'#ca8a04',bg:'#fef9c3'};
+    if(d===1)     return {key:'warn',   label:'🟠 Mañana',           color:'#ea580c',bg:'#ffedd5'};
+    if(d<=7)      return {key:'week',   label:`🟢 En ${d}d`,         color:'#16a34a',bg:'#dcfce7'};
+    return              {key:'future', label:`⚪ En ${d}d`,          color:'#64748b',bg:'#f1f5f9'};
+  }
+
+  // — Table render —
+  function renderTable(){
+    const all=readEntries();
+    $('countBadge').textContent=`${all.length} caso${all.length===1?'':'s'}`;
+    const open=all.filter(e=>!e.entregado).length;
+    const ov  =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d!==null&&d<0;}).length;
+    const tod =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d===0;}).length;
+    const snt =all.filter(e=>e.entregado).length;
+    $('statsBar').innerHTML=
+      `<span class="stat-pill total">📋 ${all.length} total</span>`+
+      `<span class="stat-pill open">🔵 ${open} abiertos</span>`+
+      `<span class="stat-pill overdue">🔴 ${ov} atrasados</span>`+
+      `<span class="stat-pill today">🟡 ${tod} hoy</span>`+
+      `<span class="stat-pill sent">✅ ${snt} entregados</span>`;
+
+    const filter=$('filterSelect').value;
+    const search=($('searchInput').value||'').toLowerCase();
+    let list=all.filter(e=>{
+      if(filter==='open'   &&  e.entregado) return false;
+      if(filter==='sent'   && !e.entregado) return false;
+      if(filter==='overdue'){const d=daysUntil(e.fechaEntrega);if(e.entregado||d===null||d>=0) return false;}
+      if(filter==='today') {const d=daysUntil(e.fechaEntrega);if(e.entregado||d!==0) return false;}
+      if(search){const hay=`${e.paciente||''} ${e.doctor||''} ${e.trabajo||''} ${e.notes||''}`.toLowerCase();if(!hay.includes(search)) return false;}
+      return true;
+    });
+    list.sort((a,b)=>{
+      const f=sortAsc?1:-1;
+      if(sortCol==='doctor')   return f*(a.doctor||'').localeCompare(b.doctor||'');
+      if(sortCol==='paciente') return f*(a.paciente||'').localeCompare(b.paciente||'');
+      if(sortCol==='trabajo')  return f*(a.trabajo||'').localeCompare(b.trabajo||'');
+      if(sortCol==='entrega'){const da=e=>e.entregado?99999:(daysUntil(e.fechaEntrega)??9999);return f*(da(a)-da(b));}
+      if(sortCol==='edad')  return f*(daysOpen(a)-daysOpen(b));
+      return 0;
+    });
+    $('monitorCount').textContent=`${list.length} / ${all.length}`;
+    const tbody=$('caseBody');
+    if(list.length===0){tbody.innerHTML='';$('monitorEmpty').hidden=false;return;}
+    $('monitorEmpty').hidden=true;
+    tbody.innerHTML=list.map(e=>{
+      const st=statusOf(e);
+      const du=daysUntil(e.fechaEntrega);
+      const age=daysOpen(e);
+      const ageColor=age<=3?'#16a34a':age<=7?'#0891b2':age<=14?'#ca8a04':age<=30?'#ea580c':'#dc2626';
+      const urgCls=e.entregado?'':du!==null&&du<0?'row-urgent':du!==null&&du<=1?'row-warning':'';
+      const impTag=e.important?'<span style="background:#fef3c7;color:#92400e;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:700;margin-right:3px">⚠️</span>':'';
+      const newCls=e.id===lastSaved?'new-highlight':'';
+      const cdText=e.entregado?'✓ Listo':du===null?'—':du<0?`${Math.abs(du)}d TARD`:du===0?'¡HOY!':`${du}d`;
+      const sentIcon=e.entregado?'↩':'✓';
+      return `<tr class="${urgCls} ${newCls}" data-id="${esc(e.id)}">
+        <td>${esc(e.doctor||'—')}</td>
+        <td><strong>${impTag}${esc(e.paciente||'—')}</strong></td>
+        <td style="color:#475569">${esc(e.trabajo||'—')}</td>
+        <td><span class="cd-pill" style="background:${st.bg};color:${st.color}">${cdText}</span></td>
+        <td style="color:${ageColor};font-weight:600">${age}d</td>
+        <td><span class="st-badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
+        <td style="text-align:right;white-space:nowrap" onclick="event.stopPropagation()">
+          <button class="act-btn btn-sent" onclick="window.LI.toggleSent('${esc(e.id)}')" title="${e.entregado?'Reabrir':'Marcar entregado'}">${sentIcon}</button>
+          <button class="act-btn btn-edit" onclick="window.LI.startEdit('${esc(e.id)}')" title="Editar">✏️</button>
+          <button class="act-btn btn-pdf"  onclick="window.LI.genPDF('${esc(e.id)}')"    title="PDF">📄</button>
+          <button class="act-btn btn-del"  onclick="window.LI.delEntry('${esc(e.id)}')"  title="Borrar">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+    if(lastSaved){
+      const row=tbody.querySelector(`tr[data-id="${lastSaved}"]`);
+      if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(()=>{lastSaved=null;},3500);
+    }
+  }
+
+  // — Reset form —
+  function resetForm(){
+    editingId=null;
+    $('editingId').value='';
+    $('formTitle').textContent='Nueva entrada';
+    $('editBanner').classList.remove('active');
+    $('cancelEditBtn').hidden=true;
+    $('saveBtn').textContent='💾 Guardar entrada';
+    const t=new Date();
+    $('fechaEntrada').value=ymd(t);
+    $('fechaEntrega').value=ymd(new Date(t.getTime()+5*86400000));
+    $('trabajoInput').value='corona';
+    $('pacienteInput').value='';
+    renderDocs('Dr. Acosta');
+    $('entryNotes').value='';
+    $('entryImportant').checked=false;
+    mats=[]; renderMatList();
+  }
+
+  // — Global LI actions (called from table HTML) —
+  window.LI = {
+    startEdit(id){
+      const e=readEntries().find(x=>x.id===id); if(!e) return;
+      editingId=id;
+      $('editingId').value=id;
+      $('formTitle').textContent='✏️ Editando entrada';
+      $('editBanner').classList.add('active');
+      $('cancelEditBtn').hidden=false;
+      $('saveBtn').textContent='💾 Actualizar entrada';
+      $('fechaEntrada').value=(e.fechaEntrada||'').slice(0,10);
+      $('fechaEntrega').value=(e.fechaEntrega||'').slice(0,10);
+      renderDocs(e.doctor||'');
+      $('pacienteInput').value=e.paciente||'';
+      $('trabajoInput').value=e.trabajo||'';
+      $('entryNotes').value=e.notes||'';
+      $('entryImportant').checked=!!e.important;
+      mats=Array.isArray(e.materials)?[...e.materials]:[];
+      renderMatList();
+      $('formCard').scrollIntoView({behavior:'smooth',block:'start'});
+    },
+    toggleSent(id){
+      const arr=readEntries();
+      const idx=arr.findIndex(x=>x.id===id); if(idx<0) return;
+      arr[idx].entregado=!arr[idx].entregado;
+      arr[idx].entregadoAt=arr[idx].entregado?new Date().toISOString():null;
+      writeEntries(arr);
+      if(sb) sb.from('entries').update({entregado:arr[idx].entregado,entregado_at:arr[idx].entregadoAt}).eq('id',id).catch(()=>{});
+      renderTable();
+    },
+    delEntry(id){
+      const e=readEntries().find(x=>x.id===id); if(!e) return;
+      if(!confirm(`¿Borrar entrada de ${e.paciente||'(sin nombre)'}?\nEsta acción no se puede deshacer.`)) return;
+      writeEntries(readEntries().filter(x=>x.id!==id));
+      if(sb) sb.from('entries').delete().eq('id',id).catch(()=>{});
+      if(editingId===id) resetForm();
+      renderTable();
+    },
+    genPDF(id){
+      const e=readEntries().find(x=>x.id===id); if(!e) return;
+      if(!window.jspdf||!window.jspdf.jsPDF){alert('Librería PDF aún cargando, espera un momento.');return;}
+      const doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'});
+      renderPDF(doc,e);
+      doc.save(`LabIntake_${(e.paciente||'entry').replace(/[^a-z0-9]/gi,'_').slice(0,30)}_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+  };
+
+  // — Form submit —
+  $('entryForm').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    const doc=$('doctorSelect').value;
+    const pac=($('pacienteInput').value||'').trim();
+    const trab=($('trabajoInput').value||'').trim();
+    const fE=$('fechaEntrada').value;
+    const fD=$('fechaEntrega').value;
+    if(!doc||!pac||!trab||!fE||!fD){alert('Faltan campos requeridos');return;}
+    const arr=readEntries();
+    if(editingId){
+      const idx=arr.findIndex(x=>x.id===editingId);
+      if(idx<0){alert('Entrada no encontrada');return;}
+      arr[idx]={...arr[idx],doctor:doc,paciente:pac,trabajo:trab,fechaEntrada:fE,fechaEntrega:fD,
+        notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]};
+      writeEntries(arr);
+      lastSaved=editingId;
+      if(sb) sb.from('entries').update({doctor:doc,paciente:pac,trabajo:trab,fecha_entrada:fE,fecha_entrega:fD,
+        notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]}).eq('id',editingId).catch(()=>{});
+    } else {
+      const entry={id:uuid(),fechaEntrada:fE,doctor:doc,paciente:pac,trabajo:trab,fechaEntrega:fD,
+        materials:[...mats],notes:$('entryNotes').value||'',important:$('entryImportant').checked,
+        entregado:false,entregadoAt:null,createdAt:new Date().toISOString()};
+      arr.push(entry); writeEntries(arr);
+      lastSaved=entry.id;
+      if(sb) sb.from('entries').insert({id:entry.id,fecha_entrada:fE,doctor:doc,paciente:pac,trabajo:trab,
+        fecha_entrega:fD,materials:[...mats],notes:entry.notes,important:entry.important,
+        entregado:false,entregado_at:null}).catch(()=>{});
+    }
+    const btn=$('saveBtn');
+    btn.textContent='✓ Guardado!'; btn.disabled=true;
+    setTimeout(()=>{btn.textContent='💾 Guardar entrada';btn.disabled=false;},1400);
+    resetForm();
+    renderTable();
+    // Auto-scroll al monitor para ver el caso
+    setTimeout(()=>$('monitorCard').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  });
+
+  // — Materials —
+  function renderMatList(){
+    const ul=$('matList'); ul.innerHTML='';
+    if(!mats.length){ul.hidden=true;return;}
+    ul.hidden=false;
+    mats.forEach((m,i)=>{
+      const li=document.createElement('li'); li.className='mat-chip';
+      li.innerHTML='<span class="mat-text"></span><button type="button" class="mat-rm">×</button>';
+      li.querySelector('.mat-text').textContent=`${m.name}${m.qty?` × ${m.qty}`:''}${m.unit?` ${m.unit}`:''}`;      li.querySelector('.mat-rm').onclick=()=>{mats.splice(i,1);renderMatList();};
+      ul.appendChild(li);
+    });
+  }
+  $('addMatBtn').onclick=()=>{
+    const n=$('matName').value.trim(); if(!n){$('matName').focus();return;}
+    mats.push({name:n,qty:$('matQty').value.trim(),unit:$('matUnit').value.trim()});
+    renderMatList(); $('matName').value=''; $('matQty').value=''; $('matUnit').value=''; $('matName').focus();
+  };
+
+  // — Doctor controls —
+  $('toggleNewDoc').onclick=()=>{$('newDocRow').hidden=false;$('newDocInput').focus();};
+  $('cancelDocBtn').onclick=()=>{$('newDocRow').hidden=true;$('newDocInput').value='';};
+  $('saveDocBtn').onclick=()=>{
+    const name=($('newDocInput').value||'').trim(); if(!name) return;
+    const docs=readDocs();
+    if(docs.some(d=>d.toLowerCase()===name.toLowerCase())){alert(`${name} ya está en la lista.`);return;}
+    docs.push(name); writeDocs(docs); renderDocs(name);
+    $('newDocRow').hidden=true; $('newDocInput').value='';
+    if(sb) sb.from('doctors').insert({name}).catch(()=>{});
+  };
+  $('cancelEditBtn').onclick=resetForm;
+
+  // — Sort & filter —
+  document.querySelectorAll('.case-table th[data-sort]').forEach(th=>{
+    th.onclick=()=>{ const col=th.dataset.sort; if(sortCol===col) sortAsc=!sortAsc; else{sortCol=col;sortAsc=true;} renderTable(); };
+  });
+  $('filterSelect').onchange=renderTable;
+  $('searchInput').oninput=renderTable;
+
+  // — PDF renderer —
+  function renderPDF(doc,e){
+    doc.setFillColor(15,23,42);doc.rect(0,0,216,30,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('LAB INTAKE',15,18);
+    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Sagifox - Dental Lab Entry Record',15,24);
+    doc.setTextColor(180,180,180);doc.setFontSize(9);doc.text('Generado: '+new Date().toLocaleString(),130,24);
+    let y=44;
+    if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('⚠ IMPORTANTE',18,y+7.5);y+=16;}
+    if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('✓ ENTREGADO',18,y+7.5);y+=16;}
+    y+=4;
+    const fields=[['Doctor / Clínica',e.doctor],['Paciente',e.paciente],['Restauración',e.trabajo],['Fecha entrada',fmtD(e.fechaEntrada)],['Fecha entrega',fmtD(e.fechaEntrega)]];
+    doc.setFontSize(9);doc.setTextColor(100,100,100);doc.setFont('helvetica','bold');doc.text('DETALLES',15,y);y+=4;
+    doc.setDrawColor(200,200,200);doc.line(15,y,200,y);y+=7;
+    fields.forEach(([lbl,val])=>{
+      doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text(lbl+':',15,y);
+      doc.setFontSize(12);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.text(String(val||'—'),65,y);y+=9;
+    });
+    if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text('NOTAS:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
+    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text('MATERIALES:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
+    doc.setDrawColor(200,200,200);doc.line(15,270,200,270);
+    doc.setFontSize(8);doc.setTextColor(150,150,150);
+    doc.text('ID: '+(e.id||'—'),15,275);
+    if(e.createdAt) doc.text('Creado: '+fmtD(e.createdAt),15,280);
+  }
+
+  // — FAB buttons —
+  $('fabExcel').onclick=()=>{
+    if(!window.XLSX){alert('Librería Excel cargando…');return;}
+    const arr=readEntries(); if(!arr.length){alert('No hay datos para exportar.');return;}
+    const rows=arr.map(e=>({
+      'Fecha Entrada':e.fechaEntrada||'','Fecha Entrega':e.fechaEntrega||'','Doctor':e.doctor||'',
+      'Paciente':e.paciente||'','Restauración':e.trabajo||'','Notas':e.notes||'',
+      'Importante':e.important?'SI':'','Entregado':e.entregado?'SI':'',
+      'Entregado El':e.entregadoAt?fmtD(e.entregadoAt):'',
+      'Materiales':(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
+      'Creado':e.createdAt?fmtD(e.createdAt):''
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'LabIntake');
+    XLSX.writeFile(wb,`LabIntake_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  $('fabCsv').onclick=()=>{
+    const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
+    const hdr=['Fecha Entrada','Fecha Entrega','Doctor','Paciente','Restauración','Notas','Importante','Entregado','Entregado El','Materiales','Creado'];
+    const rows=arr.map(e=>[
+      e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
+      (e.notes||'').replace(/"/g,'""'),e.important?'SI':'',e.entregado?'SI':'',
+      e.entregadoAt?fmtD(e.entregadoAt):'',
+      (e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
+      e.createdAt?fmtD(e.createdAt):''
+    ]);
+    const csv=[hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download=`LabIntake_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  };
+
+  $('fabPdf').onclick=()=>{
+    const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
+    if(!window.jspdf||!window.jspdf.jsPDF){alert('Librería PDF aún cargando…');return;}
+    let doc=null;
+    arr.forEach((e,i)=>{if(i===0) doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'}); else doc.addPage(); renderPDF(doc,e);});
+    doc.save(`LabIntake_Todos_${new Date().toISOString().slice(0,10)}.pdf`);
+  };
+
+  $('fabSync').onclick=async()=>{
+    const btn=$('fabSync');
+    if(!sb){alert('Sin conexión a Supabase.');return;}
+    btn.innerHTML='⏳ <span>Bajando…</span>'; btn.disabled=true;
+    try{
+      const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
+      if(error) throw error;
+      const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,paciente:row.paciente,
+        trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,materials:row.materials||[],notes:row.notes||'',
+        important:!!row.important,entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
+      const local=readEntries();
+      const remoteIds=new Set(remote.map(e=>e.id));
+      const merged=[...remote];
+      local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
+      writeEntries(merged);
+      const missing=local.filter(e=>!remoteIds.has(e.id));
+      for(const e of missing){
+        sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,paciente:e.paciente,
+          trabajo:e.trabajo,fecha_entrega:e.fechaEntrega,materials:e.materials||[],notes:e.notes||'',
+          important:!!e.important,entregado:!!e.entregado,entregado_at:e.entregadoAt||null}).catch(()=>{});
+      }
+      btn.innerHTML=`✅ <span>${merged.length} casos</span>`;
+      renderTable();
+    }catch(err){console.error(err);btn.innerHTML='❌ <span>Error</span>';}
+    btn.disabled=false;
+    setTimeout(()=>{btn.innerHTML='☁️ <span>Sync</span>';},3000);
+  };
+
+  $('fabClear').onclick=()=>{
+    if(!confirm('¿Borrar TODAS las entradas locales?\n(La nube no se afecta — haz Sync para recuperarlas.)')) return;
+    writeEntries([]); renderTable(); alert('✓ Limpiado');
+  };
+
+  // — Boot —
+  async function boot(){
+    try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(e){console.warn('SB:',e);}
+    resetForm();
+    renderTable();
+    // Auto-pull cloud al cargar
+    if(sb){
+      try{
+        const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
+        if(!error&&Array.isArray(data)){
+          const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,paciente:row.paciente,
+            trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,materials:row.materials||[],notes:row.notes||'',
+            important:!!row.important,entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
+          const local=readEntries();
+          const remoteIds=new Set(remote.map(e=>e.id));
+          const merged=[...remote];
+          local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
+          writeEntries(merged);
+          renderTable();
+        }
+      }catch(e){console.warn('auto-pull:',e);}
+    }
+    setInterval(renderTable,30000);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+
+})();
+</script>
+
+</body>
+</html>
