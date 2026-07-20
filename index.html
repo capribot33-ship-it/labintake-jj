@@ -64,16 +64,15 @@
 <header class="topbar">
   <h1>LabIntake</h1>
   <div style="display:flex;align-items:center;gap:8px">
-    <span id="syncStatus" class="sync-ok" style="display:none">&#10003; Synced</span>
+    <span id="syncStatus" class="sync-ok" style="display:none">Synced</span>
     <span id="countBadge" class="badge">0 cases</span>
   </div>
 </header>
 
 <main>
 
-  <!-- FORM -->
   <section class="card" id="formCard">
-    <div class="edit-banner" id="editBanner">&#9999;&#65039; <span>Editing entry — make changes and save to update</span></div>
+    <div class="edit-banner" id="editBanner"><span>Editing entry — make changes and save to update</span></div>
     <h2 id="formTitle">New Entry</h2>
     <form id="entryForm" autocomplete="off">
       <input type="hidden" id="editingId">
@@ -171,7 +170,6 @@
     </form>
   </section>
 
-  <!-- MONITOR -->
   <section class="card" id="monitorCard">
     <div class="sec-hdr">
       <h2>Case Monitor</h2>
@@ -214,7 +212,6 @@
 
 </main>
 
-<!-- FAB -->
 <div class="float-fab">
   <button class="fab-btn" id="fabSync"  style="background:#0891b2">Sync</button>
   <button class="fab-btn" id="fabExcel" style="background:#16a34a">Excel</button>
@@ -224,7 +221,7 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake v3.5 · Sagifox Dental</span>
+  <span class="muted">LabIntake v3.6 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -269,9 +266,9 @@
   }
 
   function statusOf(e){
-    if(e.entregado) return {key:'sent',   label:'Delivered',            color:'#16a34a',bg:'#dcfce7'};
+    if(e.entregado) return {key:'sent',   label:'Delivered',             color:'#16a34a',bg:'#dcfce7'};
     const d=daysUntil(e.fechaEntrega);
-    if(d===null)  return {key:'?',      label:'-',                     color:'#64748b',bg:'#f1f5f9'};
+    if(d===null)  return {key:'?',      label:'-',                      color:'#64748b',bg:'#f1f5f9'};
     if(d<0)       return {key:'overdue',label:`${Math.abs(d)}d overdue`,color:'#dc2626',bg:'#fee2e2'};
     if(d===0)     return {key:'today',  label:'TODAY',                  color:'#ca8a04',bg:'#fef9c3'};
     if(d===1)     return {key:'warn',   label:'Tomorrow',               color:'#ea580c',bg:'#ffedd5'};
@@ -509,65 +506,54 @@
 
   async function doSync(){
     if(!sb){
-      const stel=$('syncStatus');
-      if(stel){stel.className='sync-err';stel.style.display='inline-block';stel.textContent='No connection';}
+      const s=$('syncStatus');
+      if(s){s.className='sync-err';s.style.display='inline-block';s.textContent='No connection';}
       return -1;
     }
-    const stel=$('syncStatus');
-    if(stel){stel.className='sync-loading';stel.style.display='inline-block';stel.textContent='Syncing...';}
+    const s=$('syncStatus');
+    if(s){s.className='sync-loading';s.style.display='inline-block';s.textContent='Syncing...';}
     try{
       const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
       if(error) throw error;
       const remote=(data||[]).map(row=>({
-        id:row.id,
-        fechaEntrada:row.fecha_entrada,
-        doctor:row.doctor,
-        paciente:row.paciente,
-        trabajo:row.trabajo,
-        fechaEntrega:row.fecha_entrega,
-        materials:row.materials||[],
-        notes:row.notes||'',
-        important:!!row.important,
-        entregado:!!row.entregado,
-        entregadoAt:row.entregado_at,
-        createdAt:row.created_at
+        id:row.id, fechaEntrada:row.fecha_entrada, doctor:row.doctor,
+        paciente:row.paciente, trabajo:row.trabajo, fechaEntrega:row.fecha_entrega,
+        materials:row.materials||[], notes:row.notes||'', important:!!row.important,
+        entregado:!!row.entregado, entregadoAt:row.entregado_at, createdAt:row.created_at
       }));
       const local=readEntries();
       const remoteIds=new Set(remote.map(e=>e.id));
       const merged=[...remote];
       local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
       writeEntries(merged);
-      // push local-only entries up to cloud
-      const missing=local.filter(e=>!remoteIds.has(e.id));
-      for(const e of missing){
+      for(const e of local.filter(e=>!remoteIds.has(e.id))){
         await sb.from('entries').insert({
-          id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,
-          paciente:e.paciente,trabajo:e.trabajo,fecha_entrega:e.fechaEntrega,
-          materials:e.materials||[],notes:e.notes||'',important:!!e.important,
-          entregado:!!e.entregado,entregado_at:e.entregadoAt||null
+          id:e.id, fecha_entrada:e.fechaEntrada, doctor:e.doctor,
+          paciente:e.paciente, trabajo:e.trabajo, fecha_entrega:e.fechaEntrega,
+          materials:e.materials||[], notes:e.notes||'', important:!!e.important,
+          entregado:!!e.entregado, entregado_at:e.entregadoAt||null
         }).catch(()=>{});
       }
-      if(stel){stel.className='sync-ok';stel.textContent=`Synced: ${merged.length} cases`;}
+      if(s){s.className='sync-ok';s.textContent=`Synced: ${merged.length} cases`;}
       renderTable();
       return merged.length;
     }catch(err){
       console.error('Sync error:',err);
-      if(stel){stel.className='sync-err';stel.textContent='Sync failed';}
+      const s=$('syncStatus');
+      if(s){s.className='sync-err';s.textContent='Sync failed: '+err.message;}
       return -1;
     }
   }
 
   $('fabExcel').onclick=()=>{
-    if(!window.XLSX){alert('Excel library still loading, please wait.');return;}
+    if(!window.XLSX){alert('Excel library still loading...');return;}
     const arr=readEntries(); if(!arr.length){alert('No data to export.');return;}
-    const rows=arr.map(e=>({
-      'Entry Date':e.fechaEntrada||'','Delivery Date':e.fechaEntrega||'',
-      'Doctor':e.doctor||'','Patient':e.paciente||'','Restoration':e.trabajo||'',
-      'Notes':e.notes||'','Important':e.important?'YES':'','Delivered':e.entregado?'YES':'',
+    const rows=arr.map(e=>({'Entry Date':e.fechaEntrada||'','Delivery Date':e.fechaEntrega||'',
+      'Doctor':e.doctor||'','Patient':e.paciente||'','Restoration':e.trabajo||'','Notes':e.notes||'',
+      'Important':e.important?'YES':'','Delivered':e.entregado?'YES':'',
       'Delivered On':e.entregadoAt?fmtD(e.entregadoAt):'',
       'Materials':(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
-      'Created':e.createdAt?fmtD(e.createdAt):''
-    }));
+      'Created':e.createdAt?fmtD(e.createdAt):''}));
     const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'LabIntake');
     XLSX.writeFile(wb,`LabIntake_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -575,13 +561,10 @@
   $('fabCsv').onclick=()=>{
     const arr=readEntries(); if(!arr.length){alert('No data.');return;}
     const hdr=['Entry Date','Delivery Date','Doctor','Patient','Restoration','Notes','Important','Delivered','Delivered On','Materials','Created'];
-    const rows=arr.map(e=>[
-      e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
+    const rows=arr.map(e=>[e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
       (e.notes||'').replace(/"/g,'""'),e.important?'YES':'',e.entregado?'YES':'',
-      e.entregadoAt?fmtD(e.entregadoAt):'',
-      (e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
-      e.createdAt?fmtD(e.createdAt):''
-    ]);
+      e.entregadoAt?fmtD(e.entregadoAt):'',(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
+      e.createdAt?fmtD(e.createdAt):'']);
     const csv=[hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
@@ -589,7 +572,7 @@
   };
   $('fabPdf').onclick=()=>{
     const arr=readEntries(); if(!arr.length){alert('No data.');return;}
-    if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library still loading, please wait.');return;}
+    if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library still loading...');return;}
     let doc=null;
     arr.forEach((e,i)=>{if(i===0) doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'}); else doc.addPage(); renderPDF(doc,e);});
     doc.save(`LabIntake_All_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -611,7 +594,9 @@
     try{
       if(window.supabase&&window.supabase.createClient){
         sb=window.supabase.createClient(SB_URL,SB_KEY);
-        console.log('Supabase OK');
+        console.log('Supabase client ready');
+      } else {
+        console.warn('Supabase library not loaded yet');
       }
     }catch(e){console.warn('Supabase init error:',e);}
     resetForm();
