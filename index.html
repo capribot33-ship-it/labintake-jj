@@ -221,7 +221,7 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake v3.7 · Sagifox Dental</span>
+  <span class="muted">LabIntake v3.8 · Sagifox Dental</span>
 </footer>
 
 <script>
@@ -234,6 +234,9 @@
   const BACKUP  = '__labintake_backup_v1';
   const DOC_KEY = 'labintake.doctors.v1';
   const DEF_DOCS= ['Dr. Acosta','Dr. Bravo','Dr. Forero','Dr. Rodriguez','Dr. Secharam'];
+
+  // helper: fire-and-forget a supabase query safely (no .catch chaining)
+  function sbFire(q){ Promise.resolve(q).then(null,e=>console.warn('sb bg:',e)); }
 
   let sb=null, editingId=null, sortCol='entrega', sortAsc=true, mats=[], lastSaved=null;
 
@@ -390,7 +393,7 @@
       arr[idx].entregado=!arr[idx].entregado;
       arr[idx].entregadoAt=arr[idx].entregado?new Date().toISOString():null;
       writeEntries(arr);
-      if(sb) sb.from('entries').update({entregado:arr[idx].entregado,entregado_at:arr[idx].entregadoAt}).eq('id',id).catch(()=>{});
+      if(sb) sbFire(sb.from('entries').update({entregado:arr[idx].entregado,entregado_at:arr[idx].entregadoAt}).eq('id',id));
       renderTable();
     },
     delEntry(id){
@@ -398,7 +401,7 @@
       const e=arr.find(x=>x.id===id); if(!e) return;
       if(!confirm(`Delete entry for "${e.paciente||'(no name)'}"? This cannot be undone.`)) return;
       writeEntries(arr.filter(x=>x.id!==id));
-      if(sb) sb.from('entries').delete().eq('id',id).catch(()=>{});
+      if(sb) sbFire(sb.from('entries').delete().eq('id',id));
       if(editingId===id) resetForm();
       renderTable();
     },
@@ -427,17 +430,17 @@
         notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]};
       writeEntries(arr);
       lastSaved=editingId;
-      if(sb) sb.from('entries').update({doctor:doc,paciente:pac,trabajo:trab,fecha_entrada:fE,fecha_entrega:fD,
-        notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]}).eq('id',editingId).catch(()=>{});
+      if(sb) sbFire(sb.from('entries').update({doctor:doc,paciente:pac,trabajo:trab,fecha_entrada:fE,fecha_entrega:fD,
+        notes:$('entryNotes').value||'',important:$('entryImportant').checked,materials:[...mats]}).eq('id',editingId));
     } else {
       const entry={id:uuid(),fechaEntrada:fE,doctor:doc,paciente:pac,trabajo:trab,fechaEntrega:fD,
         materials:[...mats],notes:$('entryNotes').value||'',important:$('entryImportant').checked,
         entregado:false,entregadoAt:null,createdAt:new Date().toISOString()};
       arr.push(entry); writeEntries(arr);
       lastSaved=entry.id;
-      if(sb) sb.from('entries').insert({id:entry.id,fecha_entrada:fE,doctor:doc,paciente:pac,trabajo:trab,
+      if(sb) sbFire(sb.from('entries').insert({id:entry.id,fecha_entrada:fE,doctor:doc,paciente:pac,trabajo:trab,
         fecha_entrega:fD,materials:[...mats],notes:entry.notes,important:entry.important,
-        entregado:false,entregado_at:null}).catch(()=>{});
+        entregado:false,entregado_at:null}));
     }
     const btn=$('saveBtn');
     btn.textContent='Saved!'; btn.disabled=true;
@@ -474,7 +477,7 @@
     if(docs.some(d=>d.toLowerCase()===name.toLowerCase())){alert(`${name} is already in the list.`);return;}
     docs.push(name); writeDocs(docs); renderDocs(name);
     $('newDocRow').hidden=true; $('newDocInput').value='';
-    if(sb) sb.from('doctors').insert({name}).catch(()=>{});
+    if(sb) sbFire(sb.from('doctors').insert({name}));
   };
   $('cancelEditBtn').onclick=resetForm;
 
@@ -527,13 +530,16 @@
       const merged=[...remote];
       local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
       writeEntries(merged);
+      // push local-only entries to cloud
       for(const e of local.filter(e=>!remoteIds.has(e.id))){
-        await sb.from('entries').insert({
-          id:e.id, fecha_entrada:e.fechaEntrada, doctor:e.doctor,
-          paciente:e.paciente, trabajo:e.trabajo, fecha_entrega:e.fechaEntrega,
-          materials:e.materials||[], notes:e.notes||'', important:!!e.important,
-          entregado:!!e.entregado, entregado_at:e.entregadoAt||null
-        }).catch(()=>{});
+        try{
+          await sb.from('entries').insert({
+            id:e.id, fecha_entrada:e.fechaEntrada, doctor:e.doctor,
+            paciente:e.paciente, trabajo:e.trabajo, fecha_entrega:e.fechaEntrega,
+            materials:e.materials||[], notes:e.notes||'', important:!!e.important,
+            entregado:!!e.entregado, entregado_at:e.entregadoAt||null
+          });
+        }catch(ie){console.warn('insert err:',ie);}
       }
       if(s){s.className='sync-ok';s.textContent=`Synced: ${merged.length} cases`;}
       renderTable();
