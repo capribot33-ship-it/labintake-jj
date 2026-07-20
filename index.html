@@ -16,58 +16,64 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ===== Monitor Table ===== */
     .stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    .stat-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+    .stat-pill{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
     .stat-pill.total  {background:#dbeafe;color:#1e40af}
     .stat-pill.open   {background:#fef9c3;color:#854d0e}
     .stat-pill.overdue{background:#fee2e2;color:#991b1b}
     .stat-pill.today  {background:#fef3c7;color:#92400e}
     .stat-pill.sent   {background:#dcfce7;color:#166534}
     .case-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
-    .case-table th{padding:10px 12px;background:#f8fafc;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;user-select:none}
+    .case-table th{padding:11px 12px;background:#f8fafc;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:700;text-align:left;cursor:pointer;white-space:nowrap;user-select:none}
     .case-table th:hover{background:#f1f5f9}
-    .case-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    .case-table td{padding:11px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
     .case-table tr:last-child td{border-bottom:none}
     .case-table tr.row-urgent td{background:#fff5f5}
     .case-table tr.row-warning td{background:#fffbeb}
-    .case-table tbody tr:hover td{background:#f8fafc}
+    .case-table tbody tr:hover td{background:#f8fafc;transition:background .1s}
     @keyframes rowFlash{0%{background:#bbf7d0}100%{background:transparent}}
-    .new-highlight td{animation:rowFlash 2.5s ease-out forwards}
-    .cd-pill{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;min-width:80px;text-align:center}
-    .st-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
-    .act-btn{border:none;padding:5px 9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700;margin-left:3px;transition:opacity .1s}
-    .act-btn:hover{opacity:.85} .act-btn:active{transform:scale(.94)}
+    .new-row td{animation:rowFlash 3s ease-out forwards}
+    .cd-pill{display:inline-block;padding:5px 11px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap;min-width:75px;text-align:center}
+    .st-badge{display:inline-block;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap}
+    .act-btn{border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;margin-left:3px}
+    .act-btn:active{transform:scale(.93)}
     .btn-sent{background:#16a34a;color:#fff}
     .btn-edit{background:#2563eb;color:#fff}
     .btn-pdf {background:#7c3aed;color:#fff}
     .btn-del {background:#dc2626;color:#fff}
-    .edit-banner{background:#dbeafe;color:#1e40af;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;margin-bottom:12px;display:none;border:1px solid #bfdbfe}
-    .edit-banner.active{display:block}
+    .edit-banner{background:#dbeafe;color:#1e40af;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;margin-bottom:12px;display:none;border:1px solid #bfdbfe}
+    .edit-banner.active{display:flex;align-items:center;gap:8px}
     .search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .search-row input{flex:1;min-width:150px;height:38px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px}
-    .search-row select{height:38px;padding:0 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px}
+    .search-row input{flex:1;min-width:150px;height:40px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font:inherit}
+    .search-row select{height:40px;padding:0 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font:inherit;background:#fff}
     .sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-    .sec-hdr h2{margin:0;font-size:17px}
+    .sec-hdr h2{margin:0;font-size:18px}
     .float-fab{position:fixed;bottom:20px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:6px}
-    .fab-btn{display:flex;align-items:center;gap:8px;padding:10px 15px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.22);white-space:nowrap}
-    .fab-btn:active{transform:scale(.96)}
+    .fab-btn{display:flex;align-items:center;gap:8px;padding:11px 16px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);white-space:nowrap;font-family:inherit}
+    .fab-btn:active{transform:scale(.95)}
     .table-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px}
-    .monitor-empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+    .monitor-empty{text-align:center;padding:48px;color:#94a3b8;font-size:14px}
+    #syncStatus{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:700;display:inline-block}
+    .sync-ok{background:#dcfce7;color:#16a34a}
+    .sync-loading{background:#dbeafe;color:#2563eb}
+    .sync-err{background:#fee2e2;color:#dc2626}
   </style>
 </head>
 <body>
 
 <header class="topbar">
   <h1>LabIntake</h1>
-  <span id="countBadge" class="badge">0 casos</span>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="syncStatus" class="sync-ok" style="display:none">✓ Sync</span>
+    <span id="countBadge" class="badge">0 casos</span>
+  </div>
 </header>
 
 <main>
 
   <!-- ===== FORM ===== -->
   <section class="card" id="formCard">
-    <div class="edit-banner" id="editBanner">✏️ Editando entrada — guarda para actualizar</div>
+    <div class="edit-banner" id="editBanner">✏️ <span>Editando entrada — modifica y guarda para actualizar</span></div>
     <h2 id="formTitle">Nueva entrada</h2>
     <form id="entryForm" autocomplete="off">
       <input type="hidden" id="editingId">
@@ -162,7 +168,9 @@
       <span id="monitorCount" style="color:#64748b;font-size:12px;font-weight:600"></span>
     </div>
 
-    <div class="stats-bar" id="statsBar"></div>
+    <div class="stats-bar" id="statsBar">
+      <span class="stat-pill total">📋 0 total</span>
+    </div>
 
     <div class="search-row">
       <input type="search" id="searchInput" placeholder="🔍 Buscar paciente, doctor, trabajo…">
@@ -206,45 +214,45 @@
 </div>
 
 <footer>
-  <span class="muted">LabIntake · v3.0 · Sagifox Dental</span>
+  <span class="muted">LabIntake · v3.1 · Sagifox Dental</span>
 </footer>
 
 <script>
 (() => {
   'use strict';
 
-  // — Config —
-  const SB_URL   = 'https://nxuodoyztekbrggrpngt.supabase.co';
-  const SB_KEY   = 'sb_publishable_VHa6BQ-6C24P2aiM11uX5Q_8D14SqF0';
-  const STORE    = 'labintake.entries.v1';
-  const BACKUP   = '__labintake_backup_v1';
-  const DOC_KEY  = 'labintake.doctors.v1';
-  const DEF_DOCS = ['Dr. Acosta','Dr. Bravo','Dr. Forero','Dr. Rodriguez','Dr. Secharam'];
+  const SB_URL  = 'https://nxuodoyztekbrggrpngt.supabase.co';
+  const SB_KEY  = 'sb_publishable_VHa6BQ-6C24P2aiM11uX5Q_8D14SqF0';
+  const STORE   = 'labintake.entries.v1';
+  const BACKUP  = '__labintake_backup_v1';
+  const DOC_KEY = 'labintake.doctors.v1';
+  const DEF_DOCS= ['Dr. Acosta','Dr. Bravo','Dr. Forero','Dr. Rodriguez','Dr. Secharam'];
 
-  // — State —
-  let sb = null, editingId = null, sortCol = 'entrega', sortAsc = true, mats = [], lastSaved = null;
+  let sb=null, editingId=null, sortCol='entrega', sortAsc=true, mats=[], lastSaved=null;
 
-  // — Utils —
   const $   = id => document.getElementById(id);
-  const esc = s => { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; };
-  const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const esc = s  => { const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; };
+  const ymd = d  => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const uuid= () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);});
-  const fmtD= s => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]} ${d.getFullYear()}`; };
+  const fmtD= s  => { if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]} ${d.getFullYear()}`; };
   const daysUntil = s => { if(!s) return null; const d=new Date(s); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
   const daysOpen  = e => { const s=e.createdAt||e.fechaEntrada; if(!s) return 0; const d=new Date(s); if(isNaN(d)) return 0; const t=new Date(); d.setHours(0,0,0,0); t.setHours(0,0,0,0); return Math.max(0,Math.round((t-d)/86400000)); };
 
-  // — Storage —
-  function readEntries() {
+  // ── Storage ──────────────────────────────────────────
+  function readEntries(){
     const r=k=>{try{const a=JSON.parse(localStorage.getItem(k));return Array.isArray(a)?a:[];}catch(e){return[];}};
     const p=r(STORE),b=r(BACKUP);
     if(p.length===0&&b.length>0){try{localStorage.setItem(STORE,JSON.stringify(b));}catch(e){}return b;}
     return b.length>p.length?b:p;
   }
-  function writeEntries(a){try{localStorage.setItem(STORE,JSON.stringify(a));}catch(e){}try{localStorage.setItem(BACKUP,JSON.stringify(a));}catch(e){}}
+  function writeEntries(a){
+    try{localStorage.setItem(STORE,JSON.stringify(a));}catch(e){}
+    try{localStorage.setItem(BACKUP,JSON.stringify(a));}catch(e){}
+  }
   function readDocs(){try{const a=JSON.parse(localStorage.getItem(DOC_KEY));return Array.isArray(a)&&a.length?a:DEF_DOCS.slice();}catch(e){return DEF_DOCS.slice();}}
   function writeDocs(a){try{localStorage.setItem(DOC_KEY,JSON.stringify(a));}catch(e){}}
 
-  // — Doctor dropdown —
+  // ── Doctor dropdown ───────────────────────────────────
   function renderDocs(sel){
     const el=$('doctorSelect'); if(!el) return;
     const docs=readDocs();
@@ -252,32 +260,33 @@
     if(sel) el.value=sel;
   }
 
-  // — Status —
+  // ── Status ────────────────────────────────────────────
   function statusOf(e){
-    if(e.entregado) return {key:'sent',   label:'✅ Entregado',        color:'#16a34a',bg:'#dcfce7'};
+    if(e.entregado) return {key:'sent',   label:'✅ Entregado',      color:'#16a34a',bg:'#dcfce7'};
     const d=daysUntil(e.fechaEntrega);
-    if(d===null)  return {key:'?',      label:'—',                   color:'#64748b',bg:'#f1f5f9'};
-    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d`,  color:'#dc2626',bg:'#fee2e2'};
-    if(d===0)     return {key:'today',  label:'🟡 HOY',              color:'#ca8a04',bg:'#fef9c3'};
-    if(d===1)     return {key:'warn',   label:'🟠 Mañana',           color:'#ea580c',bg:'#ffedd5'};
-    if(d<=7)      return {key:'week',   label:`🟢 En ${d}d`,         color:'#16a34a',bg:'#dcfce7'};
-    return              {key:'future', label:`⚪ En ${d}d`,          color:'#64748b',bg:'#f1f5f9'};
+    if(d===null)  return {key:'?',      label:'—',                 color:'#64748b',bg:'#f1f5f9'};
+    if(d<0)       return {key:'overdue',label:`🔴 ${Math.abs(d)}d`,color:'#dc2626',bg:'#fee2e2'};
+    if(d===0)     return {key:'today',  label:'🟡 HOY',            color:'#ca8a04',bg:'#fef9c3'};
+    if(d===1)     return {key:'warn',   label:'🟠 Mañana',         color:'#ea580c',bg:'#ffedd5'};
+    if(d<=7)      return {key:'week',   label:`🟢 En ${d}d`,       color:'#16a34a',bg:'#dcfce7'};
+    return              {key:'future', label:`⚪ En ${d}d`,        color:'#64748b',bg:'#f1f5f9'};
   }
 
-  // — Table render —
+  // ── Table ─────────────────────────────────────────────
   function renderTable(){
     const all=readEntries();
     $('countBadge').textContent=`${all.length} caso${all.length===1?'':'s'}`;
+
     const open=all.filter(e=>!e.entregado).length;
     const ov  =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d!==null&&d<0;}).length;
     const tod =all.filter(e=>{const d=daysUntil(e.fechaEntrega);return!e.entregado&&d===0;}).length;
     const snt =all.filter(e=>e.entregado).length;
     $('statsBar').innerHTML=
-      `<span class="stat-pill total">📋 ${all.length} total</span>`+
-      `<span class="stat-pill open">🔵 ${open} abiertos</span>`+
-      `<span class="stat-pill overdue">🔴 ${ov} atrasados</span>`+
-      `<span class="stat-pill today">🟡 ${tod} hoy</span>`+
-      `<span class="stat-pill sent">✅ ${snt} entregados</span>`;
+      `<span class="stat-pill total" onclick="setFilter('all')">📋 ${all.length} total</span>`+
+      `<span class="stat-pill open" onclick="setFilter('open')">🔵 ${open} abiertos</span>`+
+      `<span class="stat-pill overdue" onclick="setFilter('overdue')">🔴 ${ov} atrasados</span>`+
+      `<span class="stat-pill today" onclick="setFilter('today')">🟡 ${tod} hoy</span>`+
+      `<span class="stat-pill sent" onclick="setFilter('sent')">✅ ${snt} entregados</span>`;
 
     const filter=$('filterSelect').value;
     const search=($('searchInput').value||'').toLowerCase();
@@ -286,7 +295,7 @@
       if(filter==='sent'   && !e.entregado) return false;
       if(filter==='overdue'){const d=daysUntil(e.fechaEntrega);if(e.entregado||d===null||d>=0) return false;}
       if(filter==='today') {const d=daysUntil(e.fechaEntrega);if(e.entregado||d!==0) return false;}
-      if(search){const hay=`${e.paciente||''} ${e.doctor||''} ${e.trabajo||''} ${e.notes||''}`.toLowerCase();if(!hay.includes(search)) return false;}
+      if(search){const h=`${e.paciente||''} ${e.doctor||''} ${e.trabajo||''} ${e.notes||''}`.toLowerCase();if(!h.includes(search)) return false;}
       return true;
     });
     list.sort((a,b)=>{
@@ -309,10 +318,10 @@
       const ageColor=age<=3?'#16a34a':age<=7?'#0891b2':age<=14?'#ca8a04':age<=30?'#ea580c':'#dc2626';
       const urgCls=e.entregado?'':du!==null&&du<0?'row-urgent':du!==null&&du<=1?'row-warning':'';
       const impTag=e.important?'<span style="background:#fef3c7;color:#92400e;padding:2px 5px;border-radius:3px;font-size:10px;font-weight:700;margin-right:3px">⚠️</span>':'';
-      const newCls=e.id===lastSaved?'new-highlight':'';
+      const newCls=e.id===lastSaved?'new-row':'';
       const cdText=e.entregado?'✓ Listo':du===null?'—':du<0?`${Math.abs(du)}d TARD`:du===0?'¡HOY!':`${du}d`;
-      const sentIcon=e.entregado?'↩':'✓';
-      return `<tr class="${urgCls} ${newCls}" data-id="${esc(e.id)}">
+      const sid=esc(e.id);
+      return `<tr class="${urgCls} ${newCls}" data-id="${sid}">
         <td>${esc(e.doctor||'—')}</td>
         <td><strong>${impTag}${esc(e.paciente||'—')}</strong></td>
         <td style="color:#475569">${esc(e.trabajo||'—')}</td>
@@ -320,21 +329,24 @@
         <td style="color:${ageColor};font-weight:600">${age}d</td>
         <td><span class="st-badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
         <td style="text-align:right;white-space:nowrap" onclick="event.stopPropagation()">
-          <button class="act-btn btn-sent" onclick="window.LI.toggleSent('${esc(e.id)}')" title="${e.entregado?'Reabrir':'Marcar entregado'}">${sentIcon}</button>
-          <button class="act-btn btn-edit" onclick="window.LI.startEdit('${esc(e.id)}')" title="Editar">✏️</button>
-          <button class="act-btn btn-pdf"  onclick="window.LI.genPDF('${esc(e.id)}')"    title="PDF">📄</button>
-          <button class="act-btn btn-del"  onclick="window.LI.delEntry('${esc(e.id)}')"  title="Borrar">🗑</button>
+          <button class="act-btn btn-sent" onclick="LI.toggleSent('${sid}')" title="${e.entregado?'Reabrir':'Marcar entregado'}">${e.entregado?'↩':'✓'}</button>
+          <button class="act-btn btn-edit" onclick="LI.startEdit('${sid}')" title="Editar">✏️</button>
+          <button class="act-btn btn-pdf"  onclick="LI.genPDF('${sid}')"    title="PDF">📄</button>
+          <button class="act-btn btn-del"  onclick="LI.delEntry('${sid}')"  title="Borrar">🗑</button>
         </td>
       </tr>`;
     }).join('');
     if(lastSaved){
       const row=tbody.querySelector(`tr[data-id="${lastSaved}"]`);
-      if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
-      setTimeout(()=>{lastSaved=null;},3500);
+      if(row) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'center'}),150);
+      setTimeout(()=>{lastSaved=null;},4000);
     }
   }
 
-  // — Reset form —
+  // ── Filter shortcut ──────────────────────────────────
+  window.setFilter = val => { $('filterSelect').value=val; renderTable(); };
+
+  // ── Reset form ───────────────────────────────────────
   function resetForm(){
     editingId=null;
     $('editingId').value='';
@@ -353,7 +365,7 @@
     mats=[]; renderMatList();
   }
 
-  // — Global LI actions (called from table HTML) —
+  // ── Row actions (global so onclick in HTML works) ────
   window.LI = {
     startEdit(id){
       const e=readEntries().find(x=>x.id===id); if(!e) return;
@@ -384,10 +396,14 @@
       renderTable();
     },
     delEntry(id){
-      const e=readEntries().find(x=>x.id===id); if(!e) return;
-      if(!confirm(`¿Borrar entrada de ${e.paciente||'(sin nombre)'}?\nEsta acción no se puede deshacer.`)) return;
-      writeEntries(readEntries().filter(x=>x.id!==id));
-      if(sb) sb.from('entries').delete().eq('id',id).catch(()=>{});
+      const arr=readEntries();
+      const e=arr.find(x=>x.id===id); if(!e) return;
+      if(!confirm(`¿Borrar entrada de "${e.paciente||'(sin nombre)'}"?\n\nEsta acción no se puede deshacer.`)) return;
+      const updated=arr.filter(x=>x.id!==id);
+      writeEntries(updated);
+      if(sb) sb.from('entries').delete().eq('id',id).then(({error})=>{
+        if(error) console.warn('delete remote:',error);
+      });
       if(editingId===id) resetForm();
       renderTable();
     },
@@ -400,7 +416,7 @@
     }
   };
 
-  // — Form submit —
+  // ── Form submit ───────────────────────────────────────
   $('entryForm').addEventListener('submit',function(ev){
     ev.preventDefault();
     const doc=$('doctorSelect').value;
@@ -434,11 +450,10 @@
     setTimeout(()=>{btn.textContent='💾 Guardar entrada';btn.disabled=false;},1400);
     resetForm();
     renderTable();
-    // Auto-scroll al monitor para ver el caso
-    setTimeout(()=>$('monitorCard').scrollIntoView({behavior:'smooth',block:'start'}),100);
+    setTimeout(()=>$('monitorCard').scrollIntoView({behavior:'smooth',block:'start'}),120);
   });
 
-  // — Materials —
+  // ── Materials ─────────────────────────────────────────
   function renderMatList(){
     const ul=$('matList'); ul.innerHTML='';
     if(!mats.length){ul.hidden=true;return;}
@@ -446,7 +461,8 @@
     mats.forEach((m,i)=>{
       const li=document.createElement('li'); li.className='mat-chip';
       li.innerHTML='<span class="mat-text"></span><button type="button" class="mat-rm">×</button>';
-      li.querySelector('.mat-text').textContent=`${m.name}${m.qty?` × ${m.qty}`:''}${m.unit?` ${m.unit}`:''}`;      li.querySelector('.mat-rm').onclick=()=>{mats.splice(i,1);renderMatList();};
+      li.querySelector('.mat-text').textContent=`${m.name}${m.qty?` × ${m.qty}`:''}${m.unit?` ${m.unit}`:''}`;
+      li.querySelector('.mat-rm').onclick=()=>{mats.splice(i,1);renderMatList();};
       ul.appendChild(li);
     });
   }
@@ -456,7 +472,7 @@
     renderMatList(); $('matName').value=''; $('matQty').value=''; $('matUnit').value=''; $('matName').focus();
   };
 
-  // — Doctor controls —
+  // ── Doctor controls ───────────────────────────────────
   $('toggleNewDoc').onclick=()=>{$('newDocRow').hidden=false;$('newDocInput').focus();};
   $('cancelDocBtn').onclick=()=>{$('newDocRow').hidden=true;$('newDocInput').value='';};
   $('saveDocBtn').onclick=()=>{
@@ -469,14 +485,14 @@
   };
   $('cancelEditBtn').onclick=resetForm;
 
-  // — Sort & filter —
+  // ── Sort & filter ─────────────────────────────────────
   document.querySelectorAll('.case-table th[data-sort]').forEach(th=>{
-    th.onclick=()=>{ const col=th.dataset.sort; if(sortCol===col) sortAsc=!sortAsc; else{sortCol=col;sortAsc=true;} renderTable(); };
+    th.onclick=()=>{const col=th.dataset.sort;if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();};
   });
   $('filterSelect').onchange=renderTable;
   $('searchInput').oninput=renderTable;
 
-  // — PDF renderer —
+  // ── PDF ───────────────────────────────────────────────
   function renderPDF(doc,e){
     doc.setFillColor(15,23,42);doc.rect(0,0,216,30,'F');
     doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont('helvetica','bold');doc.text('LAB INTAKE',15,18);
@@ -486,54 +502,80 @@
     if(e.important){doc.setFillColor(254,243,199);doc.setDrawColor(217,119,6);doc.roundedRect(15,y,70,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(146,64,14);doc.text('⚠ IMPORTANTE',18,y+7.5);y+=16;}
     if(e.entregado){doc.setFillColor(220,252,231);doc.setDrawColor(22,101,52);doc.roundedRect(15,y,60,11,2,2,'FD');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(22,101,52);doc.text('✓ ENTREGADO',18,y+7.5);y+=16;}
     y+=4;
-    const fields=[['Doctor / Clínica',e.doctor],['Paciente',e.paciente],['Restauración',e.trabajo],['Fecha entrada',fmtD(e.fechaEntrada)],['Fecha entrega',fmtD(e.fechaEntrega)]];
-    doc.setFontSize(9);doc.setTextColor(100,100,100);doc.setFont('helvetica','bold');doc.text('DETALLES',15,y);y+=4;
-    doc.setDrawColor(200,200,200);doc.line(15,y,200,y);y+=7;
-    fields.forEach(([lbl,val])=>{
-      doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text(lbl+':',15,y);
-      doc.setFontSize(12);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.text(String(val||'—'),65,y);y+=9;
+    [['Doctor / Clínica',e.doctor],['Paciente',e.paciente],['Restauración',e.trabajo],['Fecha entrada',fmtD(e.fechaEntrada)],['Fecha entrega',fmtD(e.fechaEntrega)]].forEach(([l,v])=>{
+      doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text(l+':',15,y);
+      doc.setFontSize(12);doc.setTextColor(15,23,42);doc.setFont('helvetica','bold');doc.text(String(v||'—'),65,y);y+=9;
     });
-    if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text('NOTAS:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
-    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');doc.text('MATERIALES:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
+    if(e.notes){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('NOTAS:',15,y);y+=5;doc.setFontSize(10);doc.setTextColor(15,23,42);const ls=doc.splitTextToSize(e.notes,180);doc.text(ls,15,y);y+=ls.length*5+2;}
+    if(Array.isArray(e.materials)&&e.materials.length){y+=4;doc.setFontSize(9);doc.setTextColor(100,116,139);doc.text('MATERIALES:',15,y);y+=5;e.materials.forEach(m=>{doc.setFontSize(10);doc.setTextColor(15,23,42);doc.text(`• ${m.name||''}${m.qty?' × '+m.qty:''}${m.unit?' '+m.unit:''}`,18,y);y+=7;});}
     doc.setDrawColor(200,200,200);doc.line(15,270,200,270);
     doc.setFontSize(8);doc.setTextColor(150,150,150);
     doc.text('ID: '+(e.id||'—'),15,275);
     if(e.createdAt) doc.text('Creado: '+fmtD(e.createdAt),15,280);
   }
 
-  // — FAB buttons —
+  // ── Sync helper ───────────────────────────────────────
+  async function doSync(showStatus){
+    if(!sb) return 0;
+    const stel=$('syncStatus');
+    if(stel){stel.className='sync-loading';stel.style.display='inline-block';stel.textContent='↻ Sync…';}
+    try{
+      const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
+      if(error) throw error;
+      const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,
+        paciente:row.paciente,trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,
+        materials:row.materials||[],notes:row.notes||'',important:!!row.important,
+        entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
+      const local=readEntries();
+      const remoteIds=new Set(remote.map(e=>e.id));
+      const merged=[...remote];
+      local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
+      writeEntries(merged);
+      // push missing locals to cloud
+      const missing=local.filter(e=>!remoteIds.has(e.id));
+      for(const e of missing){
+        sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,
+          paciente:e.paciente,trabajo:e.trabajo,fecha_entrega:e.fechaEntrega,
+          materials:e.materials||[],notes:e.notes||'',important:!!e.important,
+          entregado:!!e.entregado,entregado_at:e.entregadoAt||null}).catch(()=>{});
+      }
+      if(stel){stel.className='sync-ok';stel.textContent=`✓ ${merged.length} casos`;}
+      renderTable();
+      return merged.length;
+    }catch(err){
+      console.error('sync:',err);
+      if(stel){stel.className='sync-err';stel.textContent='✗ Error';}
+      return -1;
+    }
+  }
+
+  // ── FAB ───────────────────────────────────────────────
   $('fabExcel').onclick=()=>{
     if(!window.XLSX){alert('Librería Excel cargando…');return;}
     const arr=readEntries(); if(!arr.length){alert('No hay datos para exportar.');return;}
-    const rows=arr.map(e=>({
-      'Fecha Entrada':e.fechaEntrada||'','Fecha Entrega':e.fechaEntrega||'','Doctor':e.doctor||'',
-      'Paciente':e.paciente||'','Restauración':e.trabajo||'','Notas':e.notes||'',
+    const rows=arr.map(e=>({'Fecha Entrada':e.fechaEntrada||'','Fecha Entrega':e.fechaEntrega||'',
+      'Doctor':e.doctor||'','Paciente':e.paciente||'','Restauración':e.trabajo||'','Notas':e.notes||'',
       'Importante':e.important?'SI':'','Entregado':e.entregado?'SI':'',
       'Entregado El':e.entregadoAt?fmtD(e.entregadoAt):'',
       'Materiales':(e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
-      'Creado':e.createdAt?fmtD(e.createdAt):''
-    }));
+      'Creado':e.createdAt?fmtD(e.createdAt):''}));
     const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'LabIntake');
     XLSX.writeFile(wb,`LabIntake_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
-
   $('fabCsv').onclick=()=>{
     const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
     const hdr=['Fecha Entrada','Fecha Entrega','Doctor','Paciente','Restauración','Notas','Importante','Entregado','Entregado El','Materiales','Creado'];
-    const rows=arr.map(e=>[
-      e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
+    const rows=arr.map(e=>[e.fechaEntrada||'',e.fechaEntrega||'',e.doctor||'',e.paciente||'',e.trabajo||'',
       (e.notes||'').replace(/"/g,'""'),e.important?'SI':'',e.entregado?'SI':'',
       e.entregadoAt?fmtD(e.entregadoAt):'',
       (e.materials||[]).map(m=>`${m.qty||''} ${m.unit||''} ${m.name||''}`).join('; '),
-      e.createdAt?fmtD(e.createdAt):''
-    ]);
+      e.createdAt?fmtD(e.createdAt):'']);
     const csv=[hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
     a.download=`LabIntake_${new Date().toISOString().slice(0,10)}.csv`; a.click();
   };
-
   $('fabPdf').onclick=()=>{
     const arr=readEntries(); if(!arr.length){alert('No hay datos.');return;}
     if(!window.jspdf||!window.jspdf.jsPDF){alert('Librería PDF aún cargando…');return;}
@@ -541,62 +583,28 @@
     arr.forEach((e,i)=>{if(i===0) doc=new window.jspdf.jsPDF({unit:'mm',format:'letter'}); else doc.addPage(); renderPDF(doc,e);});
     doc.save(`LabIntake_Todos_${new Date().toISOString().slice(0,10)}.pdf`);
   };
-
   $('fabSync').onclick=async()=>{
     const btn=$('fabSync');
-    if(!sb){alert('Sin conexión a Supabase.');return;}
     btn.innerHTML='⏳ <span>Bajando…</span>'; btn.disabled=true;
-    try{
-      const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
-      if(error) throw error;
-      const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,paciente:row.paciente,
-        trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,materials:row.materials||[],notes:row.notes||'',
-        important:!!row.important,entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
-      const local=readEntries();
-      const remoteIds=new Set(remote.map(e=>e.id));
-      const merged=[...remote];
-      local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
-      writeEntries(merged);
-      const missing=local.filter(e=>!remoteIds.has(e.id));
-      for(const e of missing){
-        sb.from('entries').insert({id:e.id,fecha_entrada:e.fechaEntrada,doctor:e.doctor,paciente:e.paciente,
-          trabajo:e.trabajo,fecha_entrega:e.fechaEntrega,materials:e.materials||[],notes:e.notes||'',
-          important:!!e.important,entregado:!!e.entregado,entregado_at:e.entregadoAt||null}).catch(()=>{});
-      }
-      btn.innerHTML=`✅ <span>${merged.length} casos</span>`;
-      renderTable();
-    }catch(err){console.error(err);btn.innerHTML='❌ <span>Error</span>';}
+    const n=await doSync(true);
+    btn.innerHTML=n<0?'❌ <span>Error</span>':`✅ <span>${n} casos</span>`;
     btn.disabled=false;
     setTimeout(()=>{btn.innerHTML='☁️ <span>Sync</span>';},3000);
   };
-
   $('fabClear').onclick=()=>{
     if(!confirm('¿Borrar TODAS las entradas locales?\n(La nube no se afecta — haz Sync para recuperarlas.)')) return;
     writeEntries([]); renderTable(); alert('✓ Limpiado');
   };
 
-  // — Boot —
+  // ── Boot ──────────────────────────────────────────────
   async function boot(){
-    try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(e){console.warn('SB:',e);}
+    try{
+      if(window.supabase&&window.supabase.createClient)
+        sb=window.supabase.createClient(SB_URL,SB_KEY);
+    }catch(e){console.warn('SB init:',e);}
     resetForm();
     renderTable();
-    // Auto-pull cloud al cargar
-    if(sb){
-      try{
-        const {data,error}=await sb.from('entries').select('*').order('fecha_entrega',{ascending:true});
-        if(!error&&Array.isArray(data)){
-          const remote=data.map(row=>({id:row.id,fechaEntrada:row.fecha_entrada,doctor:row.doctor,paciente:row.paciente,
-            trabajo:row.trabajo,fechaEntrega:row.fecha_entrega,materials:row.materials||[],notes:row.notes||'',
-            important:!!row.important,entregado:!!row.entregado,entregadoAt:row.entregado_at,createdAt:row.created_at}));
-          const local=readEntries();
-          const remoteIds=new Set(remote.map(e=>e.id));
-          const merged=[...remote];
-          local.forEach(e=>{if(!remoteIds.has(e.id)) merged.push(e);});
-          writeEntries(merged);
-          renderTable();
-        }
-      }catch(e){console.warn('auto-pull:',e);}
-    }
+    if(sb) await doSync();
     setInterval(renderTable,30000);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
